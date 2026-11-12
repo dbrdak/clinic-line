@@ -63,7 +63,7 @@ export default defineAgent({
         .request("voice/call", z.object({ ended: z.boolean() }), {
           method: "DELETE",
         })
-        .catch(() => { });
+        .catch(() => {});
     };
 
     ctx.addShutdownCallback(cleanup);

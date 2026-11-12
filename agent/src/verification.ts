@@ -14,6 +14,7 @@ const statusSchema = z.object({
     "disconnected",
   ]),
   verificationRef: z.string().optional(),
+  newPatient: z.boolean().optional(),
 });
 
 export type VerificationResult = z.infer<typeof statusSchema>;

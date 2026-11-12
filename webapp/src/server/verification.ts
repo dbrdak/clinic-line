@@ -17,9 +17,6 @@ type Row = Record<string, SQLOutputValue>;
 const hash = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 const opaque = () => randomBytes(32).toString("base64url");
-const namesEqual = (a: string, b: string) =>
-  a.trim().normalize("NFC").toLocaleLowerCase("pl-PL") ===
-  b.trim().normalize("NFC").toLocaleLowerCase("pl-PL");
 
 function callValue(row: Row): Call {
   return {
@@ -140,7 +137,7 @@ export function beginVerification(
     const expiresAt = Date.now() + 2 * 60_000;
 
     db.prepare(
-      "INSERT INTO verifications VALUES (?, ?, ?, ?, ?, 'pending', NULL, NULL)",
+      "INSERT INTO verifications (id, call_id, first_name, last_name, expires_at, status) VALUES (?, ?, ?, ?, ?, 'pending')",
     ).run(id, callId, firstName, lastName, expiresAt);
 
     return {
@@ -178,6 +175,9 @@ export function verificationStatus(callId: string, id: string) {
     requestId: id,
     status: String(row.status),
     expiresAt: new Date(Number(row.expires_at)).toISOString(),
+    ...(row.status === "verified"
+      ? { newPatient: Boolean(row.is_new_patient) }
+      : {}),
     ...(row.status === "verified" && row.reference
       ? { verificationRef: String(row.reference) }
       : {}),
@@ -219,31 +219,23 @@ export function finishVerification(callId: string, id: string, pesel: string) {
       fail(410, "Verification request is no longer active.");
     }
 
-    const patient = db
-      .prepare("SELECT id, first_name, last_name FROM patients WHERE pesel = ?")
+    const existing = db
+      .prepare("SELECT id FROM patients WHERE pesel = ?")
       .get(pesel);
-    const matched =
-      patient &&
-      namesEqual(String(patient.first_name), String(row.first_name)) &&
-      namesEqual(String(patient.last_name), String(row.last_name));
+    const patientId = existing ? String(existing.id) : randomUUID();
+    const newPatient = !existing;
 
-    if (!matched) {
-      // Roll back consumption too: invalid details can be corrected until expiry.
-      fail(422, "Details did not match.");
+    if (newPatient) {
+      db.prepare(
+        "INSERT INTO patients (id, first_name, last_name, pesel) VALUES (?, ?, ?, ?)",
+      ).run(patientId, String(row.first_name), String(row.last_name), pesel);
     }
 
-    const status = "verified";
-
     db.prepare(
-      "UPDATE verifications SET status = ?, patient_id = ?, reference = ? WHERE id = ?",
-    ).run(
-      status,
-      matched ? String(patient.id) : null,
-      matched ? opaque() : null,
-      id,
-    );
+      "UPDATE verifications SET status = 'verified', patient_id = ?, reference = ?, is_new_patient = ? WHERE id = ?",
+    ).run(patientId, opaque(), Number(newPatient), id);
 
-    return { status };
+    return { status: "verified", newPatient };
   });
 }
 

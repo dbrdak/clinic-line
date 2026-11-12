@@ -20,6 +20,8 @@ export function createDemoClinic() {
   let sequence = 0;
   let verificationId: string | undefined;
   let reference: string | undefined;
+  let newPatient = false;
+  let registered = false;
 
   function reject(code: string, message: string): never {
     throw new ClinicApiError(code, message);
@@ -34,12 +36,21 @@ export function createDemoClinic() {
     async request(names) {
       verificationId = `00000000-0000-4000-8000-${String(++sequence).padStart(12, "0")}`;
 
+      newPatient =
+        names.firstName === "Alicja" &&
+        names.lastName === "Nowa" &&
+        !registered;
+
       reference =
-        names.firstName === "Pacjent1" && names.lastName === "Testowy"
+        (names.firstName === "Pacjent1" && names.lastName === "Testowy") ||
+        (names.firstName === "Alicja" && names.lastName === "Nowa")
           ? `demo-reference-${sequence}`
           : undefined;
 
+      registered ||= newPatient;
+
       return {
+        newPatient,
         requestId: verificationId,
         status: reference ? "verified" : "failed",
         expiresAt: "2030-05-06T08:02:00.000Z",
@@ -52,6 +63,7 @@ export function createDemoClinic() {
 
       return {
         requestId: id,
+        newPatient,
         status: reference ? "verified" : "failed",
         expiresAt: "2030-05-06T08:02:00.000Z",
         ...(reference ? { verificationRef: reference } : {}),

@@ -44,3 +44,21 @@ scenarios:
       Does not request PESEL aloud or in tool arguments. Explains demo verification is simulated,
       verifies through the demo tool before lookup, uses feminine Polish forms for herself,
       and treats ClinicLine as the app rather than the clinic name.
+  - id: SCN_demoRegistration
+    userdata:
+      language: pl
+      expectedStart: "2030-05-07T08:00:00.000Z"
+    label: Register a new demo patient and book after confirmation
+    instructions: |
+      Rozmawiaj po polsku. Jesteś nową fikcyjną pacjentką: Alicja Nowa.
+      Chcesz umówić wizytę DLA SIEBIE U LEKARKI dr Marii Przykładowej,
+      7 maja 2030 o 10:00 czasu warszawskiego. Maria jest lekarką, nie pacjentką.
+      Na początku przedstaw się jako Alicja Nowa i powiedz, że to twoja pierwsza wizyta.
+      To samodzielna symulacja bez formularza; nie podawaj żadnego numeru identyfikacyjnego.
+      Zatwierdź zapis dopiero po odczytaniu przez asystentkę dokładnych szczegółów wizyty.
+    agent_expectations: >
+      Welcomes a new patient and explains that details are needed for registration.
+      Uses verifyPatient and checkPatientVerification, then acknowledges the new registration
+      only after the service confirms it, explicitly as a simulation.
+      Never requests or speaks PESEL. Reviews the exact appointment and waits for a later
+      approval before saving it. Reports booking only after backend confirmation.

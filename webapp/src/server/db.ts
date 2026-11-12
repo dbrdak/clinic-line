@@ -27,7 +27,21 @@ export function database() {
 
   db.exec(schema);
 
-  transaction(db, () => seed(db));
+  transaction(db, () => {
+    // Keep existing local databases usable after adding registration status.
+    if (
+      !db
+        .prepare("PRAGMA table_info(verifications)")
+        .all()
+        .some((column) => column.name === "is_new_patient")
+    ) {
+      db.exec(
+        "ALTER TABLE verifications ADD COLUMN is_new_patient INTEGER NOT NULL DEFAULT 0",
+      );
+    }
+
+    seed(db);
+  });
 
   connection = db;
 

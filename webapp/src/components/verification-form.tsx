@@ -78,12 +78,17 @@ export function VerificationForm({
         {pl ? "PRYWATNY FORMULARZ" : "PRIVATE FORM"}
       </div>
       <h2 id="verification-title">
-        {pl ? "Potwierdź dane demonstracyjne" : "Verify your demo details"}
+        {pl ? "Podaj dane demonstracyjne" : "Enter your demo details"}
       </h2>
       <p>
         {pl
           ? "Wpisz wyłącznie fikcyjny PESEL. Nie wypowiadaj go na głos. Mikrofon pozostaje wyciszony."
           : "Enter a fictional PESEL only. Do not read it aloud. Your microphone stays muted."}
+      </p>
+      <p className="fine">
+        {pl
+          ? "Możesz użyć dowolnego fikcyjnego imienia, nazwiska i 11 cyfr. Jeśli to nowy PESEL, zapiszemy dane podane Klarze jako nowego pacjenta. Nie sprawdzamy sumy kontrolnej PESEL. Po zamknięciu przywrócimy poprzedni stan mikrofonu."
+          : "Use any fictional name and 11 digits. For a new PESEL, we save the name you gave Klara as a new patient. No PESEL checksum is checked. Dismissing restores your previous microphone state."}
       </p>
       <form
         onSubmit={(event) => {
@@ -175,8 +180,8 @@ export function VerificationForm({
               ? "Wysyłanie…"
               : "Submitting…"
             : pl
-              ? "Potwierdź dane"
-              : "Verify details"}
+              ? "Zapisz dane"
+              : "Save details"}
         </button>
         <button
           type="button"

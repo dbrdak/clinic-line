@@ -18,7 +18,12 @@ import {
 } from "@/lib/protocol";
 import { acceptVerificationRpc } from "@/lib/verification-rpc";
 
-type Active = { room: Room; session: CallSession; agentIdentity?: string };
+type Active = {
+  room: Room;
+  session: CallSession;
+  agentIdentity?: string;
+  resumeMicrophone?: boolean;
+};
 
 const initial: CallSnapshot<Active> = {
   phase: "idle",
@@ -120,7 +125,12 @@ export function useClinicCall(language: Language) {
 
               setRpcCount((count) => count + 1);
             },
-            mute: () => room.localParticipant.setMicrophoneEnabled(false),
+            mute: () => {
+              active.resumeMicrophone ??=
+                room.localParticipant.isMicrophoneEnabled;
+
+              return room.localParticipant.setMicrophoneEnabled(false);
+            },
             open: (request) => {
               if (
                 !closed &&
@@ -302,6 +312,12 @@ export function useClinicCall(language: Language) {
     setForm(null);
 
     if (request && active) {
+      if (active.resumeMicrophone) {
+        void toggleMicrophone();
+      }
+
+      delete active.resumeMicrophone;
+
       void callApi("/api/verification", "PATCH", active.session, {
         requestId: request.requestId,
       })
@@ -382,6 +398,8 @@ export function useClinicCall(language: Language) {
       formRef.current?.requestId === request.requestId;
     const verified = async () => {
       if (current()) {
+        delete active.resumeMicrophone;
+
         formRef.current = null;
 
         setForm(null);
@@ -417,8 +435,8 @@ export function useClinicCall(language: Language) {
       if (error instanceof CallApiError && [400, 422].includes(error.status)) {
         return failure(
           t(
-            "Dane nie pasują. Sprawdź fikcyjny PESEL i spróbuj ponownie. Imię i nazwisko muszą odpowiadać danym podanym Klarze. Jeśli zostały źle rozpoznane, zamknij formularz i popraw je w rozmowie.",
-            "Details did not match. Check the fictional PESEL and try again. Your name must match what you told Klara. If it was misheard, dismiss the form and correct it in the call.",
+            "Wpisz dokładnie 11 cyfr fikcyjnego PESEL i spróbuj ponownie. Nie musisz być istniejącym pacjentem.",
+            "Enter exactly 11 fictional PESEL digits and try again. You do not need an existing patient record.",
           ),
           true,
         );

@@ -127,7 +127,7 @@ export function createConversation(
           expiresAt: result.expiresAt,
           nextAction:
             result.status === "verified"
-              ? "Verification completed by the configured service; continue."
+              ? "Verification completed by the configured service. Call checkPatientVerification for the saved registration status before acknowledging a new patient; then continue."
               : "Wait for browser form submission. Never ask for PESEL aloud.",
         };
       }),
@@ -142,6 +142,9 @@ export function createConversation(
         return {
           status: result.status,
           verified: result.status === "verified",
+          ...(result.status === "verified"
+            ? { newPatient: result.newPatient ?? false }
+            : {}),
         };
       }),
     findAvailableSlots: async (

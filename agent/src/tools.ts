@@ -22,7 +22,7 @@ export function createClinicTools(
     llm.tool({
       name: "verifyPatient",
       description:
-        "Begin verification using the connected service after collecting fictional first and last name. Browser calls open the private form; the isolated demo explicitly simulates verification. Never collect, speak, or pass PESEL in a tool argument. A pending form result is not verification. Continue only when the service reports verified. Ask the caller to type the fictional identifier in the form. No appointment access until checkPatientVerification confirms verification. Re-request when the patient changes; previous proposals and references are cleared.",
+        "Register or identify a patient using the connected service after collecting any fictional first and last name. New patients are welcome: explain that the form saves their details before booking. Browser calls open the private form; the isolated demo explicitly simulates verification. Never collect, speak, or pass PESEL in a tool argument. A pending form result is not verification. Continue only when the service reports verified. Ask the caller to type the fictional identifier in the form. No appointment access until checkPatientVerification confirms verification. Re-request when the patient changes; previous proposals and references are cleared.",
       parameters: z.object({
         firstName: z.string().trim().min(1).max(64),
         lastName: z.string().trim().min(1).max(64),
@@ -32,7 +32,7 @@ export function createClinicTools(
     llm.tool({
       name: "checkPatientVerification",
       description:
-        "Check the backend status of this call's secure PESEL form. No identifier argument. Only verified status authorizes further appointment tools; pending, failed, expired, dismissed, or disconnected status does not. Never ask the caller to read the identifier aloud.",
+        "Check the backend status of this call's secure PESEL form. No identifier argument. After verified, newPatient=true means registration was saved: acknowledge the new patient, then continue. Only verified status authorizes further appointment tools; pending, failed, expired, dismissed, or disconnected status does not. Never ask the caller to read the identifier aloud.",
       parameters: z.object({}),
       execute: state.checkPatientVerification,
     }),
@@ -60,7 +60,7 @@ export function createClinicTools(
     llm.tool({
       name: "prepareAppointmentChange",
       description:
-        "Prepare ONE booking, cancellation or reschedule for the verified patient; does not write to the clinic. Call after selecting the exact target/slot. For rescheduling keep the existing doctor. Rechecks ownership/state and availability, replaces any old proposal, and speaks the exact review and confirmation question itself. Wait for a NEW caller answer before confirmAppointmentChange. A booking request or approval given before this review is insufficient. Do not repeat the review after this tool. Corrections require a fresh proposal; no patient creation or calendar access.",
+        "Prepare ONE booking, cancellation or reschedule for the verified patient; does not write to the clinic. Call after selecting the exact target/slot. For rescheduling keep the existing doctor. Rechecks ownership/state and availability, replaces any old proposal, and speaks the exact review and confirmation question itself. Wait for a NEW caller answer before confirmAppointmentChange. A booking request or approval given before this review is insufficient. Do not repeat the review after this tool. Corrections require a fresh proposal; no calendar access.",
       parameters: proposalInput,
       execute: state.prepareAppointmentChange,
     }),

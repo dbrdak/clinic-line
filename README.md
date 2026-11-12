@@ -149,7 +149,7 @@ Open **[http://localhost:3000](http://localhost:3000)**, select a language, and 
 
 SQLite initializes and seeds automatically. The seed provides two fictional doctors, ten patients, and thirty weekday appointments. Existing records are preserved; seed appointment dates are not refreshed on every start.
 
-**Example patient:** `Pacjent1 Testowy`, with fictional PESEL `00000000001`. Enter the identifier only in the requested form. The microphone remains muted until you explicitly re-enable it.
+**New patients are welcome:** give Klara any fictional first and last name, then enter any 11-digit fictional PESEL only in the requested form. No checksum or existing-name match is required. The backend atomically creates a new patient for a new PESEL, or reuses the existing patient without overwriting their name. Klara acknowledges a new registration only after the backend confirms it. The form stays open for invalid formatting. Closing it restores the microphone if it was previously on; after successful submission, unmute explicitly.
 
 ### Configuration
 
@@ -172,7 +172,7 @@ The standalone entrypoint needs LiveKit model credentials, but **no Next.js proc
 pnpm --dir agent console
 ```
 
-It creates fresh in-memory state for each session, uses a fixed clock of **6 May 2030**, and offers fixture slots on **7–8 May**. Verification is explicitly simulated using the fictional name `Pacjent1 Testowy`; no PESEL is collected. The browser entrypoint never falls back to this behavior.
+It creates fresh in-memory state for each session, uses a fixed clock of **6 May 2030**, and offers fixture slots on **7–8 May**. Verification is explicitly simulated using `Pacjent1 Testowy`; `Alicja Nowa` exercises new-patient registration. No PESEL is collected. The browser entrypoint never falls back to this behavior.
 
 Try a scripted conversation with the debugger:
 

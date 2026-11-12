@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS verifications (
  id TEXT PRIMARY KEY, call_id TEXT NOT NULL REFERENCES calls(id) ON DELETE CASCADE,
  first_name TEXT NOT NULL, last_name TEXT NOT NULL, expires_at INTEGER NOT NULL,
  status TEXT NOT NULL CHECK(status IN ('pending','processing','verified','failed','dismissed','expired','disconnected')),
- patient_id TEXT REFERENCES patients(id), reference TEXT UNIQUE
+ patient_id TEXT REFERENCES patients(id), reference TEXT UNIQUE,
+ is_new_patient INTEGER NOT NULL DEFAULT 0
 ) STRICT;
 CREATE INDEX IF NOT EXISTS verifications_call ON verifications(call_id);
 `;

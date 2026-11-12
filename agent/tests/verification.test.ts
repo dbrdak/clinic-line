@@ -179,3 +179,44 @@ test("parallel confirmations save once and corrected proposals require their own
 
   assert.equal(snapshot()[0]?.startsAt, "2030-05-07T09:00:00.000Z");
 });
+
+test("registration is acknowledged only after verified status and is reported once", async () => {
+  const { clinic, verification } = createDemoClinic();
+  const tools = createClinicTools(clinic, verification);
+  const call = (name: string, args: object = {}) =>
+    tools
+      .find((tool) => tool.name === name)!
+      .execute(args as never, {
+        ctx: {} as RunContext,
+        toolCallId: "registration",
+        abortSignal: new AbortController().signal,
+      });
+
+  assert.deepEqual(await call("checkPatientVerification"), {
+    status: "not_requested",
+    verified: false,
+  });
+
+  await call("verifyPatient", { firstName: "Alicja", lastName: "Nowa" });
+
+  assert.deepEqual(await call("checkPatientVerification"), {
+    status: "verified",
+    verified: true,
+    newPatient: true,
+  });
+
+  await call("verifyPatient", { firstName: "Alicja", lastName: "Nowa" });
+
+  assert.deepEqual(await call("checkPatientVerification"), {
+    status: "verified",
+    verified: true,
+    newPatient: false,
+  });
+
+  await call("verifyPatient", { firstName: "Invalid", lastName: "Fixture" });
+
+  assert.deepEqual(await call("checkPatientVerification"), {
+    status: "failed",
+    verified: false,
+  });
+});
