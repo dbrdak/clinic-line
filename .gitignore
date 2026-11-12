@@ -1,0 +1,68 @@
+# Dependencies and package-manager caches (keep lockfiles)
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/install-state.gz
+
+# Build output and tool caches
+.next/
+out/
+dist/
+build/
+.turbo/
+.cache/
+*.tsbuildinfo
+.eslintcache
+.prettiercache
+
+# Local environment and credentials (keep safe example files)
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+.direnv/
+.vercel/
+*.pem
+*.key
+
+# SQLite databases and journal files (keep migrations and seed source)
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-shm
+*.sqlite3-wal
+
+# Logs, runtime files, and test output
+logs/
+*.log
+*.pid
+*.pid.lock
+report.[0-9]*.json
+coverage/
+.nyc_output/
+*.lcov
+playwright-report/
+test-results/
+
+# Local editor and operating-system files
+.idea/
+**/.vscode/*
+!**/.vscode/settings.json
+!**/.vscode/extensions.json
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~

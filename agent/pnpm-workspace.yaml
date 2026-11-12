@@ -1,0 +1,3 @@
+onlyBuiltDependencies:
+  - "@livekit/local-inference"
+  - "@livekit/blingfire"

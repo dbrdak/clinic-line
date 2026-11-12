@@ -1,0 +1,42 @@
+{
+  "name": "clinicline-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "lk agent dev src/main.ts --deployment production",
+    "start": "node src/main.ts start",
+    "console": "lk agent console src/demo.ts",
+    "debug": "lk agent debugger start src/demo.ts",
+    "simulate": "lk agent simulate text src/demo.ts --scenarios scenarios.yaml --yes",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "lint": "eslint \"**/*.{ts,js}\"",
+    "lint:fix": "eslint --fix \"**/*.{ts,js}\"",
+    "format": "pnpm lint:fix && prettier --write . --ignore-path ../.prettierignore",
+    "format:check": "pnpm lint && prettier --check . --ignore-path ../.prettierignore",
+    "test": "node --test tests/*.test.ts"
+  },
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "@types/node": "^24.13.5",
+    "eslint": "^9.39.5",
+    "globals": "^16.5.0",
+    "jiti": "^2.7.0",
+    "prettier": "3.10.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.0"
+  },
+  "dependencies": {
+    "@livekit/agents": "^1.9.3",
+    "@livekit/plugins-ai-coustics": "^0.3.2",
+    "@livekit/rtc-node": "^1.2.2",
+    "dotenv": "^17.4.2",
+    "zod": "^4.6.5"
+  }
+}

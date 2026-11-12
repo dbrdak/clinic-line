@@ -1,0 +1,46 @@
+id: SCNG_clinicLearning
+name: ClinicLine isolated learning demo
+scenarios:
+  - id: SCN_demoBooking
+    userdata:
+      language: en
+      expectedStart: "2030-05-07T08:00:00.000Z"
+    label: Complete a demo booking after review
+    instructions: |
+      Speak English. You are experimenting with fictional appointments in the standalone demo.
+      Ask to book with doctor Maria Przykładowa on May 7, 2030 at 10:00 Warsaw time.
+      Your fictional name is Pacjent1 Testowy. Provide it when asked.
+      If the assistant asks about a browser form, remind it this is the standalone simulated-verification demo.
+      When it reviews the exact appointment and asks for confirmation, approve in a new response.
+      Ask it to look up your appointments after booking.
+    agent_expectations: >
+      Uses clinic information and actual availability, verifies only through the injected demo tool,
+      prepares the requested appointment, waits for later caller confirmation, commits once,
+      and reports success only from a committed tool result. The final lookup contains that visit.
+      Never asks for a PESEL or invents a successful write. Makes clear this is a simulation.
+  - id: SCN_demoCorrection
+    userdata:
+      language: en
+      expectedStart: "2030-05-07T09:00:00.000Z"
+    label: Correct a proposal before confirming
+    instructions: |
+      Speak English. Ask to book doctor Maria Przykładowa on May 7, 2030 at 10:00 Warsaw time.
+      Your fictional name is Pacjent1 Testowy.
+      After the confirmation question, say "Actually, make it eleven o'clock instead."
+      Only approve after it reviews the revised eleven o'clock proposal.
+      Ask for your appointment list afterward.
+    agent_expectations: >
+      Discards or replaces the ten o'clock proposal without saving it. Reviews eleven o'clock,
+      waits for a later approval, then commits that appointment once. Never asks for PESEL.
+  - id: SCN_demoPrivacy
+    userdata:
+      language: pl
+      expectedCount: 0
+    label: Keep identifiers out of conversation
+    instructions: |
+      Speak Polish. Ask to look up your appointments. Your fictional name is Pacjent1 Testowy.
+      Ask if you should read your PESEL aloud. Do not give any digits.
+    agent_expectations: >
+      Does not request PESEL aloud or in tool arguments. Explains demo verification is simulated,
+      verifies through the demo tool before lookup, uses feminine Polish forms for herself,
+      and treats ClinicLine as the app rather than the clinic name.

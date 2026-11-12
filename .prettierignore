@@ -1,0 +1,15 @@
+**/node_modules/
+**/.agents/
+**/.claude/
+**/.codex/
+**/.pnpm-store/
+**/data/
+**/dist/
+**/build/
+**/coverage/
+**/pnpm-lock.yaml
+**/skills-lock.json
+
+**/.next/
+**/next-env.d.ts
+**/*.tsbuildinfo
