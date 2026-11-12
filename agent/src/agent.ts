@@ -1,3 +1,4 @@
+import type { CallDiagnostics } from "./diagnostics.ts";
 import { Agent } from "@livekit/agents";
 import type { VerificationBridge } from "./verification.ts";
 import type { Clinic } from "./clinic.ts";
@@ -10,10 +11,11 @@ export function createAgent(
   clinic: Clinic,
   verification: VerificationBridge,
   demo = false,
+  diagnostics?: CallDiagnostics,
 ) {
   return Agent.create({
     instructions: instructions(language, demo),
     llm: createLLM(),
-    tools: createClinicTools(clinic, verification),
+    tools: createClinicTools(clinic, verification, diagnostics),
   });
 }

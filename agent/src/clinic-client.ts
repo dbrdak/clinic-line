@@ -1,3 +1,4 @@
+import type { CallDiagnostics } from "./diagnostics.ts";
 import { z } from "zod";
 import {
   clinicSchema,
@@ -15,10 +16,13 @@ export class ClinicClient implements Clinic {
   private readonly transport: typeof fetch;
   private readonly call: { id: string; secret: string } | undefined;
 
+  private readonly diagnostics: CallDiagnostics | undefined;
+
   constructor(
     baseUrl = process.env.CLINIC_API_URL ?? "http://localhost:3000/api/",
     transport: typeof fetch = fetch,
     call?: { id: string; secret: string },
+    diagnostics?: CallDiagnostics,
   ) {
     const url = new URL(baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`);
 
@@ -39,6 +43,8 @@ export class ClinicClient implements Clinic {
     this.transport = transport;
 
     this.call = call;
+
+    this.diagnostics = diagnostics;
   }
 
   async request<T>(
@@ -57,75 +63,94 @@ export class ClinicClient implements Clinic {
       throw new Error("Invalid clinic API route.");
     }
 
-    try {
-      const response = await this.transport(url, {
-        method: options.method ?? "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(this.call
-            ? {
-                Authorization: `Bearer ${this.call.secret}`,
-                "x-clinic-call-id": this.call.id,
-              }
-            : {}),
-        },
-        ...(options.body === undefined
-          ? {}
-          : { body: JSON.stringify(options.body) }),
-        signal: options.signal
-          ? AbortSignal.any([options.signal, AbortSignal.timeout(10_000)])
-          : AbortSignal.timeout(10_000),
-        redirect: "error",
-      });
+    const operation = path.startsWith("voice/verification-requests")
+      ? "verification"
+      : path === "voice/call"
+        ? "call"
+        : path.startsWith("availability?")
+          ? "availability"
+          : path === "clinic"
+            ? "clinic"
+            : path === "appointments/lookup"
+              ? "lookup"
+              : path.startsWith("appointments")
+                ? "appointment-write"
+                : "other";
+    const execute = async () => {
+      try {
+        const response = await this.transport(url, {
+          method: options.method ?? "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(this.call
+              ? {
+                  Authorization: `Bearer ${this.call.secret}`,
+                  "x-clinic-call-id": this.call.id,
+                }
+              : {}),
+          },
+          ...(options.body === undefined
+            ? {}
+            : { body: JSON.stringify(options.body) }),
+          signal: options.signal
+            ? AbortSignal.any([options.signal, AbortSignal.timeout(10_000)])
+            : AbortSignal.timeout(10_000),
+          redirect: "error",
+        });
 
-      if (!response.ok) {
-        if (response.status >= 500) {
+        if (!response.ok) {
+          if (response.status >= 500) {
+            throw new ClinicApiError(
+              options.mutation ? "OUTCOME_UNKNOWN" : "SERVICE_UNAVAILABLE",
+              options.mutation
+                ? "The change may have been saved. Do not retry or claim success; look up appointments to reconcile."
+                : "Clinic service is unavailable. Do not invent results.",
+              Boolean(options.mutation),
+            );
+          }
+
+          const errors: Record<number, string> = {
+            400: "INVALID_REQUEST: Check the supplied fields, date and time.",
+            401: "PATIENT_VERIFICATION_FAILED: Patient details did not match. Ask for correction without revealing stored values.",
+            404: "NOT_FOUND: The requested doctor or authorized appointment was not found.",
+            409: "CONFLICT: The slot or appointment state has changed. Refresh availability or appointments before proposing again.",
+          };
+
           throw new ClinicApiError(
-            options.mutation ? "OUTCOME_UNKNOWN" : "SERVICE_UNAVAILABLE",
-            options.mutation
-              ? "The change may have been saved. Do not retry or claim success; look up appointments to reconcile."
-              : "Clinic service is unavailable. Do not invent results.",
+            "REQUEST_REJECTED",
+            errors[response.status] ?? "The clinic rejected this request.",
+          );
+        }
+
+        const parsed = schema.safeParse(await response.json());
+
+        if (!parsed.success) {
+          throw new ClinicApiError(
+            options.mutation ? "OUTCOME_UNKNOWN" : "INVALID_RESPONSE",
+            "The clinic returned an invalid response. Do not claim an outcome or blindly retry.",
             Boolean(options.mutation),
           );
         }
 
-        const errors: Record<number, string> = {
-          400: "INVALID_REQUEST: Check the supplied fields, date and time.",
-          401: "PATIENT_VERIFICATION_FAILED: Patient details did not match. Ask for correction without revealing stored values.",
-          404: "NOT_FOUND: The requested doctor or authorized appointment was not found.",
-          409: "CONFLICT: The slot or appointment state has changed. Refresh availability or appointments before proposing again.",
-        };
+        return parsed.data;
+      } catch (error) {
+        if (error instanceof ClinicApiError) {
+          throw error;
+        }
 
         throw new ClinicApiError(
-          "REQUEST_REJECTED",
-          errors[response.status] ?? "The clinic rejected this request.",
-        );
-      }
-
-      const parsed = schema.safeParse(await response.json());
-
-      if (!parsed.success) {
-        throw new ClinicApiError(
-          options.mutation ? "OUTCOME_UNKNOWN" : "INVALID_RESPONSE",
-          "The clinic returned an invalid response. Do not claim an outcome or blindly retry.",
+          options.mutation ? "OUTCOME_UNKNOWN" : "SERVICE_UNAVAILABLE",
+          options.mutation
+            ? "The connection failed and the change may have been saved. Do not retry or claim success; look up appointments to reconcile."
+            : "The clinic request could not complete. Do not invent results.",
           Boolean(options.mutation),
         );
       }
+    };
 
-      return parsed.data;
-    } catch (error) {
-      if (error instanceof ClinicApiError) {
-        throw error;
-      }
-
-      throw new ClinicApiError(
-        options.mutation ? "OUTCOME_UNKNOWN" : "SERVICE_UNAVAILABLE",
-        options.mutation
-          ? "The connection failed and the change may have been saved. Do not retry or claim success; look up appointments to reconcile."
-          : "The clinic request could not complete. Do not invent results.",
-        Boolean(options.mutation),
-      );
-    }
+    return this.diagnostics
+      ? this.diagnostics.http(operation, options.signal, execute)
+      : execute();
   }
 
   clinic(signal?: AbortSignal) {

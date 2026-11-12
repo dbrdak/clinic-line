@@ -1,3 +1,4 @@
+import type { CallDiagnostics } from "./diagnostics.ts";
 import { z } from "zod";
 import { ClinicClient } from "./clinic-client.ts";
 
@@ -42,6 +43,7 @@ export function createVerificationBridge(
     requestId: string;
     expiresAt: string;
   }) => Promise<void>,
+  diagnostics?: CallDiagnostics,
 ): VerificationBridge {
   return {
     async request(names, signal) {
@@ -77,13 +79,21 @@ export function createVerificationBridge(
         throw new Error("Browser verification form unavailable.");
       }
 
+      diagnostics?.wait("form", true);
+
       return result;
     },
-    status(requestId) {
-      return client.request(
+    async status(requestId) {
+      const result = await client.request(
         `voice/verification-requests/${encodeURIComponent(requestId)}`,
         statusSchema,
       );
+
+      if (result.status !== "pending" && result.status !== "processing") {
+        diagnostics?.wait("form", false);
+      }
+
+      return result;
     },
   };
 }

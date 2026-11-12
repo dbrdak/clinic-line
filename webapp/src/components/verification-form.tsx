@@ -1,23 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { FormRequest, Language } from "@/lib/protocol";
+import type { FormRequest } from "@/lib/protocol";
 
 export function VerificationForm({
   request,
-  language,
   submit,
   dismiss,
 }: {
   request: FormRequest;
-  language: Language;
   submit(
     pesel: string,
   ): Promise<void | { message: string; retryable: boolean }>;
 
   dismiss(): void;
 }) {
-  const pl = language === "pl";
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const [invalid, setInvalid] = useState(false);
@@ -74,21 +71,16 @@ export function VerificationForm({
         dismiss();
       }}
     >
-      <div className="eyebrow">
-        {pl ? "PRYWATNY FORMULARZ" : "PRIVATE FORM"}
-      </div>
-      <h2 id="verification-title">
-        {pl ? "Podaj dane demonstracyjne" : "Enter your demo details"}
-      </h2>
+      <div className="eyebrow">PRIVATE FORM</div>
+      <h2 id="verification-title">Enter your demo details</h2>
       <p>
-        {pl
-          ? "Wpisz wyłącznie fikcyjny PESEL. Nie wypowiadaj go na głos. Mikrofon pozostaje wyciszony."
-          : "Enter a fictional PESEL only. Do not read it aloud. Your microphone stays muted."}
+        Enter a fictional PESEL only. Do not read it aloud. Your microphone
+        stays muted.
       </p>
       <p className="fine">
-        {pl
-          ? "Możesz użyć dowolnego fikcyjnego imienia, nazwiska i 11 cyfr. Jeśli to nowy PESEL, zapiszemy dane podane Klarze jako nowego pacjenta. Nie sprawdzamy sumy kontrolnej PESEL. Po zamknięciu przywrócimy poprzedni stan mikrofonu."
-          : "Use any fictional name and 11 digits. For a new PESEL, we save the name you gave Klara as a new patient. No PESEL checksum is checked. Dismissing restores your previous microphone state."}
+        Use any fictional name and 11 digits. For a new PESEL, we save the name
+        you gave Klara as a new patient. No PESEL checksum is checked.
+        Dismissing restores your previous microphone state.
       </p>
       <form
         onSubmit={(event) => {
@@ -122,9 +114,8 @@ export function VerificationForm({
             })
             .catch(() => {
               setFeedback({
-                message: pl
-                  ? "Wynik niepotwierdzony. Zamknij formularz i poproś Klarę o sprawdzenie statusu."
-                  : "Result unconfirmed. Dismiss the form and ask Klara to check status.",
+                message:
+                  "Result unconfirmed. Dismiss the form and ask Klara to check status.",
                 retryable: false,
               });
             })
@@ -135,9 +126,7 @@ export function VerificationForm({
             });
         }}
       >
-        <label htmlFor="pesel">
-          {pl ? "Fikcyjny PESEL" : "Fictional PESEL"}
-        </label>
+        <label htmlFor="pesel">Fictional PESEL</label>
         <input
           id="pesel"
           name="demo-identifier"
@@ -159,12 +148,8 @@ export function VerificationForm({
         />
         <p id="pesel-hint" className={invalid ? "error" : "fine"}>
           {invalid
-            ? pl
-              ? "Wpisz dokładnie 11 cyfr."
-              : "Enter exactly 11 digits."
-            : pl
-              ? `Ważny jeszcze ${seconds} s. Dane nie trafiają do rozmowy.`
-              : `Expires in ${seconds}s. This value is not sent to the conversation.`}
+            ? "Enter exactly 11 digits."
+            : `Expires in ${seconds}s. This value is not sent to the conversation.`}
         </p>
         {feedback && (
           <p id="pesel-feedback" className="error" role="alert">
@@ -175,13 +160,7 @@ export function VerificationForm({
           className="primary"
           disabled={busy || feedback?.retryable === false}
         >
-          {busy
-            ? pl
-              ? "Wysyłanie…"
-              : "Submitting…"
-            : pl
-              ? "Zapisz dane"
-              : "Save details"}
+          {busy ? "Submitting…" : "Save details"}
         </button>
         <button
           type="button"
@@ -189,7 +168,7 @@ export function VerificationForm({
           disabled={busy}
           onClick={dismiss}
         >
-          {pl ? "Zamknij formularz" : "Dismiss form"}
+          Dismiss form
         </button>
       </form>
     </dialog>

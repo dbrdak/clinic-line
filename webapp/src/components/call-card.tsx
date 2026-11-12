@@ -64,6 +64,7 @@ export function CallCard({
   return (
     <section
       className="call-card"
+      lang={controller.language}
       aria-label={t("Rozmowa z Klarą", "Call Klara")}
     >
       <div className="card-top">
@@ -120,7 +121,6 @@ export function CallCard({
           {ongoing
             ? t("Zakończ rozmowę", "End call")
             : t("Porozmawiaj z Klarą", "Talk to Klara")}
-          {!ongoing && <ArrowUpRight size={18} />}
         </button>
         <button
           className="mic-button"

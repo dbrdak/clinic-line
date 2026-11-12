@@ -1,3 +1,4 @@
+import type { CallDiagnostics, ToolName } from "./diagnostics.ts";
 import { llm } from "@livekit/agents";
 import { z } from "zod";
 import { idSchema, type Clinic } from "./clinic.ts";
@@ -8,8 +9,18 @@ import { createConversation } from "./conversation.ts";
 export function createClinicTools(
   clinic: Clinic,
   verification?: VerificationBridge,
+  diagnostics?: CallDiagnostics,
 ) {
   const state = createConversation(clinic, verification);
+  const measured =
+    <Args, Result>(
+      name: ToolName,
+      execute: (args: Args, options: llm.ToolOptions) => Promise<Result>,
+    ) =>
+    (args: Args, options: llm.ToolOptions) =>
+      diagnostics
+        ? diagnostics.tool(name, options, () => execute(args, options))
+        : execute(args, options);
 
   return [
     llm.tool({
@@ -17,7 +28,7 @@ export function createClinicTools(
       description:
         "Read clinic hours, duration, Warsaw timezone, trusted current time and actual doctor IDs. Use before resolving relative dates or choosing a doctor. Read-only; no patient data needed. Do not invent clinic names or doctor IDs.",
       parameters: z.object({}),
-      execute: state.getClinicInformation,
+      execute: measured("getClinicInformation", state.getClinicInformation),
     }),
     llm.tool({
       name: "verifyPatient",
@@ -27,14 +38,17 @@ export function createClinicTools(
         firstName: z.string().trim().min(1).max(64),
         lastName: z.string().trim().min(1).max(64),
       }),
-      execute: state.verifyPatient,
+      execute: measured("verifyPatient", state.verifyPatient),
     }),
     llm.tool({
       name: "checkPatientVerification",
       description:
         "Check the backend status of this call's secure PESEL form. No identifier argument. After verified, newPatient=true means registration was saved: acknowledge the new patient, then continue. Only verified status authorizes further appointment tools; pending, failed, expired, dismissed, or disconnected status does not. Never ask the caller to read the identifier aloud.",
       parameters: z.object({}),
-      execute: state.checkPatientVerification,
+      execute: measured(
+        "checkPatientVerification",
+        state.checkPatientVerification,
+      ),
     }),
     llm.tool({
       name: "findAvailableSlots",
@@ -48,21 +62,24 @@ export function createClinicTools(
           .date()
           .describe("Explicit Europe/Warsaw calendar date, YYYY-MM-DD."),
       }),
-      execute: state.findAvailableSlots,
+      execute: measured("findAvailableSlots", state.findAvailableSlots),
     }),
     llm.tool({
       name: "lookupAppointments",
       description:
         "Read appointments for the patient successfully matched by verifyPatient in this call. No caller-supplied patient ID. Use to identify the exact appointment before cancellation/rescheduling, or to inspect an uncertain mutation outcome. Return IDs internally; describe dates, doctor and status to the caller. Does not change records. A lookup alone does not authorize retrying an uncertain write.",
       parameters: z.object({}),
-      execute: state.lookupAppointments,
+      execute: measured("lookupAppointments", state.lookupAppointments),
     }),
     llm.tool({
       name: "prepareAppointmentChange",
       description:
         "Prepare ONE booking, cancellation or reschedule for the verified patient; does not write to the clinic. Call after selecting the exact target/slot. For rescheduling keep the existing doctor. Rechecks ownership/state and availability, replaces any old proposal, and speaks the exact review and confirmation question itself. Wait for a NEW caller answer before confirmAppointmentChange. A booking request or approval given before this review is insufficient. Do not repeat the review after this tool. Corrections require a fresh proposal; no calendar access.",
       parameters: proposalInput,
-      execute: state.prepareAppointmentChange,
+      execute: measured(
+        "prepareAppointmentChange",
+        state.prepareAppointmentChange,
+      ),
     }),
     llm.tool({
       name: "confirmAppointmentChange",
@@ -76,14 +93,20 @@ export function createClinicTools(
             "Exact application-generated proposalId returned by prepareAppointmentChange, never invented.",
           ),
       }),
-      execute: state.confirmAppointmentChange,
+      execute: measured(
+        "confirmAppointmentChange",
+        state.confirmAppointmentChange,
+      ),
     }),
     llm.tool({
       name: "discardAppointmentChange",
       description:
         "Discard the pending proposal when the caller refuses, changes their mind, or corrects details. Does not cancel an existing appointment or undo a committed change. After corrections, prepare the replacement proposal and obtain new confirmation.",
       parameters: z.object({}),
-      execute: state.discardAppointmentChange,
+      execute: measured(
+        "discardAppointmentChange",
+        state.discardAppointmentChange,
+      ),
     }),
   ];
 }

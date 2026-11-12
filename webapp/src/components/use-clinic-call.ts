@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallDiagnostics } from "./use-call-diagnostics";
 import { useEffect, useRef, useState } from "react";
 import {
   ConnectionState,
@@ -62,6 +63,7 @@ async function callApi(
 
 export function useClinicCall(language: Language) {
   const [call, setCall] = useState(initial);
+  const diagnostics = useCallDiagnostics(call.value);
   const [muted, setMuted] = useState(true);
   const [micBusy, setMicBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -239,15 +241,6 @@ export function useClinicCall(language: Language) {
     });
   }, []);
 
-  useEffect(() => {
-    document.documentElement.lang = language;
-
-    document.title =
-      language === "pl"
-        ? "ClinicLine · Porozmawiaj z Klarą"
-        : "ClinicLine · Talk to Klara";
-  }, [language]);
-
   useEffect(
     () => () => {
       void manager.current?.end();
@@ -387,10 +380,7 @@ export function useClinicCall(language: Language) {
     });
 
     if (!active || !request) {
-      return failure(
-        t("Rozmowa została zakończona.", "The call has ended."),
-        false,
-      );
+      return failure("The call has ended.", false);
     }
 
     const current = () =>
@@ -434,10 +424,7 @@ export function useClinicCall(language: Language) {
     } catch (error) {
       if (error instanceof CallApiError && [400, 422].includes(error.status)) {
         return failure(
-          t(
-            "Wpisz dokładnie 11 cyfr fikcyjnego PESEL i spróbuj ponownie. Nie musisz być istniejącym pacjentem.",
-            "Enter exactly 11 fictional PESEL digits and try again. You do not need an existing patient record.",
-          ),
+          "Enter exactly 11 fictional PESEL digits and try again. You do not need an existing patient record.",
           true,
         );
       }
@@ -465,10 +452,7 @@ export function useClinicCall(language: Language) {
 
         if (result.status === "pending") {
           return failure(
-            t(
-              "Nie udało się potwierdzić wysłania. Formularz jest nadal aktywny. Spróbuj ponownie.",
-              "Submission could not be confirmed. The form is still active. Try again.",
-            ),
+            "Submission could not be confirmed. The form is still active. Try again.",
             true,
           );
         }
@@ -482,15 +466,14 @@ export function useClinicCall(language: Language) {
     }
 
     return failure(
-      t(
-        "Formularz jest nieaktywny lub wynik jest niepotwierdzony. Zamknij go, włącz mikrofon i poproś Klarę o sprawdzenie statusu lub nowy formularz.",
-        "This form is inactive or the result is unconfirmed. Dismiss it, unmute, and ask Klara to check status or open a new form.",
-      ),
+      "This form is inactive or the result is unconfirmed. Dismiss it, unmute, and ask Klara to check status or open a new form.",
       false,
     );
   };
 
   return {
+    language,
+    diagnostics,
     t,
     call,
     muted,

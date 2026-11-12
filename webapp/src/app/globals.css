@@ -48,7 +48,7 @@ summary:focus-visible {
   outline-offset: 5px;
 }
 .shell {
-  max-width: 1240px;
+  max-width: 1560px;
   margin: auto;
   padding: 0 48px;
 }
@@ -118,55 +118,8 @@ main {
   gap: 54px 64px;
   padding: 76px 0 36px;
 }
-.hero {
-  padding-top: 22px;
-}
-.hero .eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.tiny-dot {
-  height: 6px;
-  width: 6px;
-  border-radius: 50%;
-  background: #5d9679;
-}
 .eyebrow {
   color: var(--green);
-}
-h1 {
-  font-size: clamp(40px, 4.5vw, 60px);
-  line-height: 1.12;
-  letter-spacing: -2.9px;
-  margin: 27px 0;
-}
-h1 em {
-  font-family: Georgia, serif;
-  font-weight: 400;
-  color: var(--green);
-}
-.intro {
-  color: var(--muted);
-  font-size: 16px;
-  line-height: 1.8;
-  max-width: 420px;
-}
-.benefits {
-  display: grid;
-  gap: 14px;
-  font-size: 13px;
-  margin-top: 30px;
-}
-.benefits span {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-}
-.benefits svg {
-  background: #e2ece1;
-  border-radius: 50%;
-  padding: 2px;
 }
 .privacy-note {
   display: flex;
@@ -340,45 +293,12 @@ h1 em {
   background: #f6f2e6;
   text-align: left;
 }
-.how {
-  grid-column: 1/-1;
-  border-top: 1px solid var(--line);
-  padding-top: 32px;
-}
-.steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 38px;
-  margin-top: 25px;
-}
-.steps article {
-  position: relative;
-  padding-left: 38px;
-}
-.steps article > span {
-  position: absolute;
-  left: 0;
-  top: 2px;
-  font-family: Georgia, serif;
-  font-size: 20px;
-  color: #80a28c;
-}
-.steps h3 {
-  font-size: 13px;
-  margin: 0 0 9px;
-}
-.steps p {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.6;
-  margin: 0;
-}
 .diagnostics {
-  grid-column: 1/-1;
+  grid-column: auto;
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 15px 18px;
-  margin-top: -18px;
+  margin-top: 0;
 }
 .diagnostics summary {
   font-size: 12px;
@@ -534,39 +454,12 @@ footer > span:last-child {
     padding-top: 32px;
     gap: 32px;
   }
-  .hero {
-    padding-top: 0;
-  }
-  .hero .eyebrow {
-    font-size: 8px;
-  }
-  h1 {
-    font-size: 48px;
-    margin: 22px 0;
-  }
-  .intro {
-    font-size: 15px;
-  }
-  .benefits {
-    gap: 10px;
-    margin-top: 22px;
-  }
   .call-card {
     padding: 24px;
   }
   .orb {
     width: 170px;
     height: 170px;
-  }
-  .how {
-    padding-top: 27px;
-  }
-  .steps {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-  .steps article {
-    padding-left: 43px;
   }
   .diagnostics {
     margin-top: 0;
@@ -596,5 +489,259 @@ footer > span:last-child {
   *::after {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* Technical lab stays within the page on narrow screens. */
+.diagnostics {
+  min-width: 0;
+}
+.diagnostic-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0;
+}
+.diagnostic-view {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.diagnostic-view h3 {
+  font-size: 18px;
+  margin: 0 0 10px;
+}
+.diagnostic-view h4 {
+  font-size: 13px;
+  margin: 22px 0 10px;
+}
+.diagnostic-view p {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.diagnostic-table {
+  overflow: auto;
+  max-height: 480px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 14px 0;
+}
+.diagnostic-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+.diagnostic-table th,
+.diagnostic-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  min-width: 105px;
+}
+.diagnostic-table thead th {
+  background: #eef3f0;
+  color: #24473c;
+  position: sticky;
+  top: 0;
+}
+.diagnostic-table small,
+.transport-card small {
+  display: block;
+  font-weight: normal;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.metric-definitions {
+  padding: 12px 0;
+  font-size: 12px;
+}
+.metric-definitions dl {
+  display: block;
+}
+.metric-definitions dl > div {
+  display: block;
+  margin: 12px 0;
+}
+.metric-definitions dd {
+  text-align: left;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+.diagnostic-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+}
+.diagnostic-counts span {
+  background: #eef3f0;
+  padding: 8px;
+  border-radius: 6px;
+}
+.transport-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 16px 12px;
+  margin: 12px 0;
+}
+.transport-card dl > div {
+  flex-wrap: wrap;
+}
+.transport-card dd {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.diagnostic-events {
+  font-size: 12px;
+  line-height: 1.8;
+  padding-left: 20px;
+  max-height: 350px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+
+/* Visible diagnostics workspace; call controls stay close at desktop sizes. */
+.call-workspace {
+  grid-template-columns: minmax(0, 1fr) 350px;
+  align-items: start;
+  gap: 28px;
+  padding: 36px 0;
+}
+.call-panel {
+  min-width: 0;
+  position: sticky;
+  top: 24px;
+}
+.call-panel .privacy-note {
+  margin-top: 20px;
+}
+.diagnostics {
+  background: #fff;
+  padding: 24px;
+}
+.diagnostics-heading h1 {
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.2;
+  letter-spacing: -1px;
+  margin: 12px 0;
+}
+.diagnostics h2 {
+  font-size: 20px;
+  margin: 24px 0 12px;
+}
+.diagnostics .fine {
+  font-size: 13px;
+  line-height: 1.65;
+}
+.diagnostic-overview {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.diagnostic-overview > div {
+  display: block;
+  background: var(--paper);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.diagnostic-overview dd {
+  text-align: left;
+  margin-top: 6px;
+  font-weight: 600;
+}
+.diagnostic-tabs a {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.diagnostic-tabs a:hover {
+  background: var(--paper);
+}
+.diagnostic-view {
+  scroll-margin-top: 20px;
+}
+.diagnostic-table table {
+  font-size: 13px;
+}
+.diagnostic-table {
+  overscroll-behavior: contain;
+}
+.diagnostic-events {
+  overscroll-behavior: contain;
+  font-size: 13px;
+}
+.metric-definitions dl > div {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+@media (max-width: 1050px) {
+  .call-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .call-panel {
+    position: static;
+    order: -1;
+  }
+  .call-panel .call-card {
+    max-width: 520px;
+    margin: auto;
+  }
+  .call-panel .privacy-note {
+    max-width: 520px;
+    margin: 20px auto 0;
+  }
+}
+@media (max-width: 640px) {
+  .diagnostics {
+    padding: 16px;
+  }
+  .diagnostic-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .metric-definitions dl > div {
+    display: block;
+  }
+}
+
+.diagnostics-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.diagnostics-heading {
+  flex: 1 1 220px;
+}
+.diagnostic-downloads {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+.diagnostic-downloads button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 12px;
+  min-height: 38px;
+}
+.diagnostic-downloads button:hover:not(:disabled) {
+  background: #eaf1e9;
+}
+@media (max-width: 640px) {
+  .diagnostic-downloads {
+    margin-left: 0;
+    justify-content: flex-start;
   }
 }

@@ -4,7 +4,7 @@
 
 Meet **Klara**, a Polish- and English-speaking virtual receptionist. Patients can talk to her to find available appointments, book a visit, check existing reservations, cancel, or reschedule. When identification is needed, Klara opens a form in the browser instead of asking the caller to dictate a PESEL number.
 
-ClinicLine is a simplified reservation system inspired by the Polish public health fund. It uses fictional clinics, doctors, and patients to explore real-time voice AI—not to provide healthcare services. ClinicLine is the application name, not the clinic's name.
+ClinicLine is a simplified appointment reservation system for a fictional Polish clinic. It uses fictional clinics, doctors, and patients to explore real-time voice AI—not to provide healthcare services. ClinicLine is the application name, not the clinic's name.
 
 The project focuses on a practical question: **how do you turn a voice conversation into a reliable, observable application action?**
 
@@ -25,7 +25,7 @@ The application uses **native function tools** for its clinic API. Calendar inte
 
 ## Experience
 
-1. Select **Polish or English** and start a call.
+1. Start in **English** (the default), or select **Polish**, then start a call.
 2. Ask Klara for an appointment with one of the available doctors.
 3. Provide a fictional first name and surname. Enter the fictional PESEL in the requested on-screen form.
 4. Choose a slot. Klara reviews the doctor, date, time, and requested action.
@@ -153,16 +153,18 @@ SQLite initializes and seeds automatically. The seed provides two fictional doct
 
 ### Configuration
 
-| Setting                  | Application | Purpose                                                                       |
-| ------------------------ | ----------- | ----------------------------------------------------------------------------- |
-| `DATABASE_PATH`          | webapp      | SQLite file; defaults to `./data/clinic-line.sqlite` relative to the web app. |
-| `CLINIC_API_URL`         | agent       | Clinic API base; defaults to `http://localhost:3000/api/`.                    |
-| `DEMO_LANGUAGE`          | agent       | Standalone demo language: `en` or `pl`. Browser calls use the UI selection.   |
-| `LLM_MODEL`              | agent       | LiveKit Inference language-model override.                                    |
-| `STT_MODEL`              | agent       | Speech-recognition model override.                                            |
-| `TTS_MODEL`, `TTS_VOICE` | agent       | Speech-synthesis model and compatible voice overrides.                        |
+| Setting                  | Application | Purpose                                                                               |
+| ------------------------ | ----------- | ------------------------------------------------------------------------------------- |
+| `DATABASE_PATH`          | webapp      | SQLite file; defaults to `./data/clinic-line.sqlite` relative to the web app.         |
+| `CLINIC_API_URL`         | agent       | Clinic API base; defaults to `http://localhost:3000/api/`.                            |
+| `DEMO_LANGUAGE`          | agent       | Standalone demo language: `en` (default) or `pl`. Browser calls use the UI selection. |
+| `LLM_MODEL`              | agent       | LiveKit Inference language-model override.                                            |
+| `STT_MODEL`              | agent       | Speech-recognition model override.                                                    |
+| `TTS_MODEL`, `TTS_VOICE` | agent       | Speech-synthesis model and compatible voice overrides.                                |
 
-Model configuration is centralized in [`agent/src/models.ts`](agent/src/models.ts). Values in `.env.local` override the code defaults; the example environment file also supplies model choices. Check each model's language support and parameters before swapping providers. Restart the worker or debugger after changes.
+Model configuration is centralized in [`agent/src/models.ts`](agent/src/models.ts). English is the initial browser and standalone language. The UI selection is bound to each call and used for agent instructions, greetings, STT, and TTS. Set `DEMO_LANGUAGE=pl` for standalone Polish experiments; scenario-specific languages take precedence.
+
+Values in `.env.local` override the code defaults; the example environment file supplies the same bilingual defaults: Deepgram Nova-3 and Cartesia Sonic-3 with Jacqueline. [LiveKit lists both English and Polish for Sonic-3](https://docs.livekit.io/agents/models/tts/cartesia/). Existing local model overrides are preserved. Check each model's language support and parameters before swapping providers. Restart the worker or debugger after changes.
 
 ## Experiment with the agent alone
 
@@ -172,15 +174,15 @@ The standalone entrypoint needs LiveKit model credentials, but **no Next.js proc
 pnpm --dir agent console
 ```
 
-It creates fresh in-memory state for each session, uses a fixed clock of **6 May 2030**, and offers fixture slots on **7–8 May**. Verification is explicitly simulated using `Pacjent1 Testowy`; `Alicja Nowa` exercises new-patient registration. No PESEL is collected. The browser entrypoint never falls back to this behavior.
+It creates fresh in-memory state for each session, uses a fixed clock of **6 May 2030**, and offers fixture slots on **7–8 May**. Verification is explicitly simulated using the fictional names defined in the demo fixture. No PESEL is collected. The browser entrypoint never falls back to this behavior.
 
 Try a scripted conversation with the debugger:
 
 ```sh
 cd agent
 lk agent debugger start src/demo.ts --port 18978
-lk agent debugger say --port 18978 "Book Maria Przykładowa on May 7, 2030 at 10:00 Warsaw time. My fictional name is Pacjent1 Testowy."
-# Wait for Klara's review, then correct the proposal:
+lk agent debugger say --port 18978 "Which fictional doctors and patient names can I use in this simulation?"
+# Request a booking using the returned fixture details, wait for the review, then correct it:
 lk agent debugger say --port 18978 "Actually, make it eleven o'clock instead."
 # Wait for the revised review, then approve:
 lk agent debugger say --port 18978 "Yes, book that appointment."
@@ -219,7 +221,7 @@ pnpm --dir agent build
 
 The agent runs TypeScript directly; its build command performs type checking without emitting JavaScript. Dedicated frontend/backend test suites are intentionally outside the learning scope. CI is configured for both applications' checks, agent tests, and isolated simulations; cloud simulations require the configured LiveKit repository secrets. Prettier conventions are shared at the repository root.
 
-The browser diagnostics display actual SDK connection and agent states, connection quality, reconnect counts, track counts, microphone state, elapsed time, and RPC activity. Per-stage STT/LLM/TTS timings are marked unavailable because the agent does not publish them to the UI. Text tests and simulations do not establish microphone permissions, speech quality, or real audio interruption behavior—those require a browser voice call.
+The browser diagnostics display actual SDK connection and agent states, connection quality, reconnect counts, track counts, microphone state, elapsed time, and RPC activity. Agent-published per-message timings, interruption decisions, and tool/HTTP timings appear when measured; absent measurements are explicitly unavailable. Text tests and simulations do not establish microphone permissions, speech quality, or real audio interruption behavior—those require a browser voice call.
 
 ## Scheduling scope
 
@@ -266,3 +268,11 @@ Keep SQLite on persistent local storage and keep secrets out of the browser. Pub
 - [Agent dispatch](https://docs.livekit.io/agents/server/agent-dispatch/)
 - [Agent debugger](https://docs.livekit.io/testing/debugger/)
 - [Agent simulations](https://docs.livekit.io/testing/simulations/)
+
+## Live diagnostics lab
+
+The main page shows **Diagnostics lab** beside the Klara call tile, with four visible groups: per-turn voice latency, adaptive interruption decisions, browser audio transport, and tool/clinic HTTP execution. Only allowlisted timing/status data is sent to the bound caller; browser transport reports stay local. The lab uses the existing two processes and adds no telemetry service or database.
+
+See [diagnostics definitions, telemetry flow, limitations and demo sequence](docs/diagnostics.md). Agent-side response timing and browser↔LiveKit transport measurements are separate; neither is presented as measured speaker audibility.
+
+The diagnostics header offers JSON downloads for retained metrics, Cloud user/agent transcripts, and Cloud log metadata. Cloud exports require server-only Admin user authentication and PII redaction; setup, timing, and privacy limits are documented in [the diagnostics guide](docs/diagnostics.md#downloading-call-data).

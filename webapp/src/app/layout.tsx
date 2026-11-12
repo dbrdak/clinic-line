@@ -3,15 +3,15 @@ import "@livekit/components-styles";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ClinicLine · Porozmawiaj z Klarą",
-  description: "Fictional NFZ clinic voice receptionist demo.",
+  title: "ClinicLine · Talk to Klara",
+  description: "Voice appointment assistant for a fictional Polish clinic.",
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pl">
+    <html lang="en">
       <body>{children}</body>
     </html>
   );
