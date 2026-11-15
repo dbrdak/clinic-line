@@ -16,6 +16,8 @@
   },
   "dependencies": {
     "@clinicline/contracts": "workspace:*",
+    "@fastify/helmet": "^13.2.0",
+    "@fastify/rate-limit": "^11.2.2",
     "@fastify/type-provider-zod": "^1.0.3",
     "@livekit/protocol": "^1.54.1",
     "dotenv": "catalog:",

@@ -99,5 +99,11 @@ export default defineConfig([
       '@typescript-eslint/no-deprecated': 'warn',
     },
   },
+  {
+    files: ['apps/server/src/modules/**/*.routes.ts'],
+    rules: {
+      '@typescript-eslint/require-await': 'off',
+    },
+  },
   prettier,
 ]);
