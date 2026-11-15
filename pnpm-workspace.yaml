@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - packages/*
+
+onlyBuiltDependencies:
+  - '@livekit/blingfire'
+  - '@livekit/local-inference'
+  - esbuild
+
+catalog:
+  zod: ^4.6.7
+  dotenv: ^18.0.10

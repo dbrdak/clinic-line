@@ -4,14 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --hostname localhost",
-    "build": "next build",
-    "start": "next start --hostname 127.0.0.1",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "pnpm lint:fix && prettier --write . --ignore-path ../.prettierignore",
-    "format:check": "prettier --check . --ignore-path ../.prettierignore"
+    "format": "pnpm lint:fix && prettier --write .",
+    "format:check": "prettier --check ."
   },
   "engines": {
     "node": ">=24",

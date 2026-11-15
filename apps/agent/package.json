@@ -1,0 +1,24 @@
+{
+  "name": "clinicline-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "lk agent dev src/main.ts --deployment production",
+    "start": "node src/main.ts start",
+    "console": "lk agent console src/demo.ts",
+    "debug": "lk agent debugger start src/demo.ts",
+    "simulate": "lk agent simulate text src/demo.ts --scenarios scenarios.yaml --yes",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@clinicline/contracts": "workspace:*",
+    "@livekit/agents": "^1.10.0",
+    "@livekit/plugins-ai-coustics": "^0.3.5",
+    "@livekit/rtc-node": "^1.2.2",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  }
+}

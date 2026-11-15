@@ -1,0 +1,31 @@
+{
+  "name": "@clinicline/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./appointments": {
+      "types": "./dist/appointments.d.ts",
+      "default": "./dist/appointments.js"
+    },
+    "./doctors": {
+      "types": "./dist/doctors.d.ts",
+      "default": "./dist/doctors.js"
+    },
+    "./patients": {
+      "types": "./dist/patients.d.ts",
+      "default": "./dist/patients.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  }
+}
