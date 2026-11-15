@@ -1,5 +1,6 @@
 import { llm } from '@livekit/agents';
 import { z } from 'zod';
+import { clinicInformationSchema, availabilityResponseSchema } from '@clinicline/contracts';
 
 // Wire contract only. This application never imports backend implementations.
 export const idSchema = z.string().min(1).max(128);
@@ -21,26 +22,12 @@ export const appointmentSchema = z.object({
   status: z.enum(['scheduled', 'cancelled']),
 });
 
-export const clinicSchema = z.object({
-  now: dateTimeSchema,
-  timeZone: z.literal('Europe/Warsaw'),
-  opensAt: z.literal('07:00'),
-  closesAt: z.literal('19:00'),
-  appointmentMinutes: z.literal(30),
-  doctors: z.array(doctorSchema),
-  operatingDays: z.string(),
-  bookingHorizon: z.string(),
-  callsAvailable: z.string(),
-});
+export const clinicSchema = clinicInformationSchema;
+export const availabilitySchema = availabilityResponseSchema;
 
-export const availabilitySchema = z.object({
-  doctorId: idSchema,
-  date: z.iso.date(),
-  timeZone: z.literal('Europe/Warsaw'),
-  slots: z.array(z.object({ startsAt: dateTimeSchema, endsAt: dateTimeSchema })),
-});
-
-export type PatientDetails = { verificationRef: string };
+export interface PatientDetails {
+  verificationRef: string;
+}
 
 export type ClinicAppointment = z.infer<typeof appointmentSchema>;
 

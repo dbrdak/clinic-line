@@ -52,7 +52,7 @@ export const appointmentRoutes: FastifyPluginAsync = async (app) => {
   );
 
   router.patch(
-    '/appointment:_id',
+    '/:appointment_id',
     {
       schema: {
         params: appointmentIdParamsSchema,

@@ -7,6 +7,7 @@ import { registerErrorHandler } from './shared/error-handler.js';
 import { appointmentRoutes } from './modules/appointments/appointments.routes.js';
 import { doctorRoutes } from './modules/doctors/doctors.routes.js';
 import { patientRoutes } from './modules/patients/patients.routes.js';
+import { clinicRoutes } from './modules/clinic/clinic.routes.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -34,6 +35,10 @@ export async function buildApp() {
   app.get('/health', () => ({
     status: 'ok',
   }));
+
+  await app.register(clinicRoutes, {
+    prefix: '/api/clinic',
+  });
 
   await app.register(appointmentRoutes, {
     prefix: '/api/appointments',
