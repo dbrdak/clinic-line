@@ -1,4 +1,3 @@
-
 import js from '@eslint/js';
 import { defineConfig } from 'eslint/config';
 import prettier from 'eslint-config-prettier/flat';
@@ -33,10 +32,7 @@ export default defineConfig([
     },
   },
   {
-    files: [
-      'apps/*/src/**/*.{ts,tsx,mts,cts}',
-      'packages/*/src/**/*.{ts,tsx,mts,cts}',
-    ],
+    files: ['apps/*/src/**/*.{ts,tsx,mts,cts}', 'packages/*/src/**/*.{ts,tsx,mts,cts}'],
 
     extends: [
       js.configs.recommended,
@@ -72,10 +68,7 @@ export default defineConfig([
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/await-thenable': 'error',
-      '@typescript-eslint/return-await': [
-        'error',
-        'error-handling-correctness-only',
-      ],
+      '@typescript-eslint/return-await': ['error', 'error-handling-correctness-only'],
       '@typescript-eslint/consistent-type-imports': [
         'error',
         {

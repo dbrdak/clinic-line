@@ -1,15 +1,15 @@
-import type { VerificationBridge } from "./verification.ts";
-import { llm, type RunContext } from "@livekit/agents";
-import { randomUUID } from "node:crypto";
-import { z } from "zod";
-import { proposalInput } from "./tool-schemas.ts";
-import { warsawTime, addDays } from "./time.ts";
+import type { VerificationBridge } from './verification.ts';
+import { llm, type RunContext } from '@livekit/agents';
+import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
+import { proposalInput } from './tool-schemas.ts';
+import { warsawTime, addDays } from './time.ts';
 import {
   ClinicApiError,
   type Clinic,
   type ClinicAppointment,
   type PatientDetails,
-} from "./clinic.ts";
+} from './clinic.ts';
 
 type ToolOptions = { ctx: RunContext; abortSignal: AbortSignal };
 
@@ -27,15 +27,12 @@ function fail(code: string, message: string): never {
 
 function latestUser(ctx: RunContext) {
   return ctx.session.history.items
-    .filter((item) => item.type === "message" && item.role === "user")
+    .filter((item) => item.type === 'message' && item.role === 'user')
     .at(-1);
 }
 
 /** Called once per createAgent(): patient details, proposals and receipts never cross calls. */
-export function createConversation(
-  client: Clinic,
-  verification?: VerificationBridge,
-) {
+export function createConversation(client: Clinic, verification?: VerificationBridge) {
   let verificationRequestId: string | undefined;
   let patient: PatientDetails | undefined;
   let pending: Proposal | undefined;
@@ -64,18 +61,18 @@ export function createConversation(
   async function verifiedPatient(): Promise<PatientDetails> {
     if (!verification || !verificationRequestId) {
       fail(
-        "VERIFICATION_REQUIRED",
-        "Ask for fictional first and last name, then use verifyPatient to open the secure PESEL form. Never ask the caller to speak PESEL.",
+        'VERIFICATION_REQUIRED',
+        'Ask for fictional first and last name, then use verifyPatient to open the secure PESEL form. Never ask the caller to speak PESEL.',
       );
     }
 
     const result = await verification.status(verificationRequestId);
 
-    if (result.status !== "verified" || !result.verificationRef) {
+    if (result.status !== 'verified' || !result.verificationRef) {
       patient = undefined;
 
       fail(
-        "VERIFICATION_REQUIRED",
+        'VERIFICATION_REQUIRED',
         `The secure form status is ${result.status}. Do not disclose appointments. Use checkPatientVerification or request a new form if it expired or was dismissed.`,
       );
     }
@@ -112,8 +109,8 @@ export function createConversation(
 
         if (!verification) {
           fail(
-            "FORM_UNAVAILABLE",
-            "Secure verification requires the ClinicLine browser. Do not request PESEL by voice or chat.",
+            'FORM_UNAVAILABLE',
+            'Secure verification requires the ClinicLine browser. Do not request PESEL by voice or chat.',
           );
         }
 
@@ -126,25 +123,23 @@ export function createConversation(
           requestId: result.requestId,
           expiresAt: result.expiresAt,
           nextAction:
-            result.status === "verified"
-              ? "Verification completed by the configured service. Call checkPatientVerification for the saved registration status before acknowledging a new patient; then continue."
-              : "Wait for browser form submission. Never ask for PESEL aloud.",
+            result.status === 'verified'
+              ? 'Verification completed by the configured service. Call checkPatientVerification for the saved registration status before acknowledging a new patient; then continue.'
+              : 'Wait for browser form submission. Never ask for PESEL aloud.',
         };
       }),
     checkPatientVerification: async () =>
       exclusive(async () => {
         if (!verification || !verificationRequestId) {
-          return { status: "not_requested", verified: false };
+          return { status: 'not_requested', verified: false };
         }
 
         const result = await verification.status(verificationRequestId);
 
         return {
           status: result.status,
-          verified: result.status === "verified",
-          ...(result.status === "verified"
-            ? { newPatient: result.newPatient ?? false }
-            : {}),
+          verified: result.status === 'verified',
+          ...(result.status === 'verified' ? { newPatient: result.newPatient ?? false } : {}),
         };
       }),
     findAvailableSlots: async (
@@ -155,10 +150,7 @@ export function createConversation(
         const clinic = await client.clinic(abortSignal);
 
         if (!clinic.doctors.some((doctor) => doctor.id === doctorId)) {
-          fail(
-            "DOCTOR_NOT_FOUND",
-            "Choose a doctor returned by getClinicInformation.",
-          );
+          fail('DOCTOR_NOT_FOUND', 'Choose a doctor returned by getClinicInformation.');
         }
 
         const result = await client.availability(doctorId, date, abortSignal);
@@ -168,21 +160,18 @@ export function createConversation(
           slots: result.slots.map((slot) => ({
             ...slot,
             warsawDate: warsawTime(new Date(slot.startsAt)).date,
-            warsawTime: new Intl.DateTimeFormat("en-GB", {
-              timeZone: "Europe/Warsaw",
-              hour: "2-digit",
-              minute: "2-digit",
-              hourCycle: "h23",
+            warsawTime: new Intl.DateTimeFormat('en-GB', {
+              timeZone: 'Europe/Warsaw',
+              hour: '2-digit',
+              minute: '2-digit',
+              hourCycle: 'h23',
             }).format(new Date(slot.startsAt)),
           })),
         };
       }),
     lookupAppointments: async (_: unknown, { abortSignal }: ToolOptions) =>
       exclusive(async () => {
-        const result = await client.lookup(
-          await verifiedPatient(),
-          abortSignal,
-        );
+        const result = await client.lookup(await verifiedPatient(), abortSignal);
 
         return {
           ...result,
@@ -198,8 +187,8 @@ export function createConversation(
 
         if (outcomeUnknown) {
           fail(
-            "RECONCILIATION_REQUIRED",
-            "A previous write has an unknown outcome. Look up appointments and stop further writes in this call; do not blindly retry.",
+            'RECONCILIATION_REQUIRED',
+            'A previous write has an unknown outcome. Look up appointments and stop further writes in this call; do not blindly retry.',
           );
         }
 
@@ -207,46 +196,38 @@ export function createConversation(
         const user = latestUser(ctx);
 
         if (!user) {
-          fail("USER_REQUEST_REQUIRED", "Wait for an actual caller request.");
+          fail('USER_REQUEST_REQUIRED', 'Wait for an actual caller request.');
         }
 
         const clinic = await client.clinic(abortSignal);
         let existing: ClinicAppointment | undefined;
 
-        if (input.action === "book") {
-          if (
-            !input.doctorId ||
-            input.appointmentId !== null ||
-            !input.startsAt
-          ) {
+        if (input.action === 'book') {
+          if (!input.doctorId || input.appointmentId !== null || !input.startsAt) {
             fail(
-              "INVALID_PROPOSAL",
-              "Booking requires doctorId and startsAt, with appointmentId null.",
+              'INVALID_PROPOSAL',
+              'Booking requires doctorId and startsAt, with appointmentId null.',
             );
           }
         } else {
           if (
             !input.appointmentId ||
             input.doctorId !== null ||
-            (input.action === "cancel"
-              ? input.startsAt !== null
-              : !input.startsAt)
+            (input.action === 'cancel' ? input.startsAt !== null : !input.startsAt)
           ) {
             fail(
-              "INVALID_PROPOSAL",
-              "Changes require appointmentId, doctorId null, and startsAt only for rescheduling.",
+              'INVALID_PROPOSAL',
+              'Changes require appointmentId, doctorId null, and startsAt only for rescheduling.',
             );
           }
 
           const result = await client.lookup(details, abortSignal);
 
-          existing = result.appointments.find(
-            (item) => item.id === input.appointmentId,
-          );
+          existing = result.appointments.find((item) => item.id === input.appointmentId);
 
-          if (!existing || existing.status !== "scheduled") {
+          if (!existing || existing.status !== 'scheduled') {
             fail(
-              "APPOINTMENT_NOT_CHANGEABLE",
+              'APPOINTMENT_NOT_CHANGEABLE',
               "Select a scheduled, future appointment from this patient's lookup results.",
             );
           }
@@ -256,13 +237,10 @@ export function createConversation(
         const doctor = clinic.doctors.find((item) => item.id === doctorId);
 
         if (!doctor) {
-          fail(
-            "DOCTOR_NOT_FOUND",
-            "Refresh clinic information and choose an existing doctor.",
-          );
+          fail('DOCTOR_NOT_FOUND', 'Refresh clinic information and choose an existing doctor.');
         }
 
-        if (input.action !== "cancel") {
+        if (input.action !== 'cancel') {
           const result = await client.availability(
             doctorId,
             warsawTime(new Date(input.startsAt!)).date,
@@ -270,14 +248,11 @@ export function createConversation(
           );
 
           if (
-            !result.slots.some(
-              (slot) =>
-                Date.parse(slot.startsAt) === Date.parse(input.startsAt!),
-            )
+            !result.slots.some((slot) => Date.parse(slot.startsAt) === Date.parse(input.startsAt!))
           ) {
             fail(
-              "SLOT_UNAVAILABLE",
-              "Refresh slots and ask the caller to select another. No appointment changed.",
+              'SLOT_UNAVAILABLE',
+              'Refresh slots and ask the caller to select another. No appointment changed.',
             );
           }
         }
@@ -298,22 +273,18 @@ export function createConversation(
 
         // Explicit child reply: never wait for the parent speech that owns this tool.
         const review = ctx.session.generateReply({
-          instructions: `Speak a short, natural confirmation question following your normal voice rules. Never output JSON, code, field names, or identifiers. Nothing has been saved. Ask the caller to confirm this exact action and then stop. Action: ${proposal.action}. Doctor: ${doctor.firstName} ${doctor.lastName}. Appointment date and local time in Warsaw: ${new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Warsaw", dateStyle: "full", timeStyle: "short" }).format(new Date(input.startsAt ?? existing!.startsAt))}. ${existing && input.action === "reschedule" ? `Original appointment in Warsaw: ${new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Warsaw", dateStyle: "full", timeStyle: "short" }).format(new Date(existing.startsAt))}.` : ""} Duration: thirty minutes. Do not say it is booked, cancelled, or rescheduled yet.`,
-          toolChoice: "none",
+          instructions: `Speak a short, natural confirmation question following your normal voice rules. Never output JSON, code, field names, or identifiers. Nothing has been saved. Ask the caller to confirm this exact action and then stop. Action: ${proposal.action}. Doctor: ${doctor.firstName} ${doctor.lastName}. Appointment date and local time in Warsaw: ${new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Warsaw', dateStyle: 'full', timeStyle: 'short' }).format(new Date(input.startsAt ?? existing!.startsAt))}. ${existing && input.action === 'reschedule' ? `Original appointment in Warsaw: ${new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Warsaw', dateStyle: 'full', timeStyle: 'short' }).format(new Date(existing.startsAt))}.` : ''} Duration: thirty minutes. Do not say it is booked, cancelled, or rescheduled yet.`,
+          toolChoice: 'none',
         });
 
         await review.waitForPlayout();
 
-        if (
-          review.interrupted ||
-          abortSignal.aborted ||
-          latestUser(ctx)?.id !== user.id
-        ) {
+        if (review.interrupted || abortSignal.aborted || latestUser(ctx)?.id !== user.id) {
           pending = undefined;
 
           fail(
-            "REVIEW_INTERRUPTED",
-            "No change was made. Resolve the interruption and prepare a new proposal before confirmation.",
+            'REVIEW_INTERRUPTED',
+            'No change was made. Resolve the interruption and prepare a new proposal before confirmation.',
           );
         }
 
@@ -321,10 +292,10 @@ export function createConversation(
 
         return {
           proposalId: proposal.id,
-          status: "awaiting_confirmation",
+          status: 'awaiting_confirmation',
           reviewAlreadySpoken: true,
           nextAction:
-            "Wait silently for the caller. Do not confirm or repeat the review in this turn.",
+            'Wait silently for the caller. Do not confirm or repeat the review in this turn.',
         };
       }),
     confirmAppointmentChange: async (
@@ -340,29 +311,22 @@ export function createConversation(
 
         const proposal = pending;
 
-        if (
-          outcomeUnknown ||
-          !proposal ||
-          proposal.id !== proposalId ||
-          !proposal.reviewed
-        ) {
+        if (outcomeUnknown || !proposal || proposal.id !== proposalId || !proposal.reviewed) {
           fail(
-            "CONFIRMATION_REQUIRED",
-            "No reviewed current proposal matches. Prepare the exact change and wait for a later approval.",
+            'CONFIRMATION_REQUIRED',
+            'No reviewed current proposal matches. Prepare the exact change and wait for a later approval.',
           );
         }
 
         const users = ctx.session.history.items.filter(
-          (item) => item.type === "message" && item.role === "user",
+          (item) => item.type === 'message' && item.role === 'user',
         );
-        const original = users.findIndex(
-          (item) => item.id === proposal.preparedByUserId,
-        );
+        const original = users.findIndex((item) => item.id === proposal.preparedByUserId);
 
         if (original < 0 || users.length !== original + 2) {
           fail(
-            "FRESH_CONFIRMATION_REQUIRED",
-            "Approval must be the next caller turn after the completed review. Resolve questions/corrections and prepare again if needed.",
+            'FRESH_CONFIRMATION_REQUIRED',
+            'Approval must be the next caller turn after the completed review. Resolve questions/corrections and prepare again if needed.',
           );
         }
 
@@ -373,20 +337,18 @@ export function createConversation(
 
         if (proposal.original) {
           const result = await client.lookup(proposal.patient);
-          const current = result.appointments.find(
-            (item) => item.id === proposal.original!.id,
-          );
+          const current = result.appointments.find((item) => item.id === proposal.original!.id);
 
           if (
             !current ||
-            current.status !== "scheduled" ||
+            current.status !== 'scheduled' ||
             current.startsAt !== proposal.original.startsAt ||
             current.endsAt !== proposal.original.endsAt ||
             current.doctorId !== proposal.original.doctorId
           ) {
             fail(
-              "STALE_PROPOSAL",
-              "The appointment changed since review. Look it up, prepare a new proposal, and obtain fresh confirmation.",
+              'STALE_PROPOSAL',
+              'The appointment changed since review. Look it up, prepare a new proposal, and obtain fresh confirmation.',
             );
           }
         }

@@ -1,5 +1,5 @@
-import type { CallDiagnostics } from "./diagnostics.ts";
-import { z } from "zod";
+import type { CallDiagnostics } from './diagnostics.ts';
+import { z } from 'zod';
 import {
   clinicSchema,
   availabilitySchema,
@@ -8,7 +8,7 @@ import {
   type Clinic,
   type PatientDetails,
   type ClinicAppointment,
-} from "./clinic.ts";
+} from './clinic.ts';
 
 /** Fixed-route backend client. Never includes raw responses or patient details in errors. */
 export class ClinicClient implements Clinic {
@@ -19,22 +19,22 @@ export class ClinicClient implements Clinic {
   private readonly diagnostics: CallDiagnostics | undefined;
 
   constructor(
-    baseUrl = process.env.CLINIC_API_URL ?? "http://localhost:3000/api/",
+    baseUrl = process.env.CLINIC_API_URL ?? 'http://localhost:3000/api/',
     transport: typeof fetch = fetch,
     call?: { id: string; secret: string },
     diagnostics?: CallDiagnostics,
   ) {
-    const url = new URL(baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`);
+    const url = new URL(baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`);
 
     if (
-      !["http:", "https:"].includes(url.protocol) ||
+      !['http:', 'https:'].includes(url.protocol) ||
       url.username ||
       url.password ||
       url.search ||
       url.hash
     ) {
       throw new Error(
-        "CLINIC_API_URL must be an HTTP(S) API base URL without credentials, query or fragment.",
+        'CLINIC_API_URL must be an HTTP(S) API base URL without credentials, query or fragment.',
       );
     }
 
@@ -51,7 +51,7 @@ export class ClinicClient implements Clinic {
     path: string,
     schema: z.ZodType<T>,
     options: {
-      method?: "GET" | "POST" | "PATCH" | "DELETE";
+      method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
       body?: unknown;
       signal?: AbortSignal;
       mutation?: boolean;
@@ -60,65 +60,63 @@ export class ClinicClient implements Clinic {
     const url = new URL(path, this.baseUrl);
 
     if (!url.href.startsWith(this.baseUrl)) {
-      throw new Error("Invalid clinic API route.");
+      throw new Error('Invalid clinic API route.');
     }
 
-    const operation = path.startsWith("voice/verification-requests")
-      ? "verification"
-      : path === "voice/call"
-        ? "call"
-        : path.startsWith("availability?")
-          ? "availability"
-          : path === "clinic"
-            ? "clinic"
-            : path === "appointments/lookup"
-              ? "lookup"
-              : path.startsWith("appointments")
-                ? "appointment-write"
-                : "other";
+    const operation = path.startsWith('voice/verification-requests')
+      ? 'verification'
+      : path === 'voice/call'
+        ? 'call'
+        : path.startsWith('availability?')
+          ? 'availability'
+          : path === 'clinic'
+            ? 'clinic'
+            : path === 'appointments/lookup'
+              ? 'lookup'
+              : path.startsWith('appointments')
+                ? 'appointment-write'
+                : 'other';
     const execute = async () => {
       try {
         const response = await this.transport(url, {
-          method: options.method ?? "GET",
+          method: options.method ?? 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             ...(this.call
               ? {
                   Authorization: `Bearer ${this.call.secret}`,
-                  "x-clinic-call-id": this.call.id,
+                  'x-clinic-call-id': this.call.id,
                 }
               : {}),
           },
-          ...(options.body === undefined
-            ? {}
-            : { body: JSON.stringify(options.body) }),
+          ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
           signal: options.signal
             ? AbortSignal.any([options.signal, AbortSignal.timeout(10_000)])
             : AbortSignal.timeout(10_000),
-          redirect: "error",
+          redirect: 'error',
         });
 
         if (!response.ok) {
           if (response.status >= 500) {
             throw new ClinicApiError(
-              options.mutation ? "OUTCOME_UNKNOWN" : "SERVICE_UNAVAILABLE",
+              options.mutation ? 'OUTCOME_UNKNOWN' : 'SERVICE_UNAVAILABLE',
               options.mutation
-                ? "The change may have been saved. Do not retry or claim success; look up appointments to reconcile."
-                : "Clinic service is unavailable. Do not invent results.",
+                ? 'The change may have been saved. Do not retry or claim success; look up appointments to reconcile.'
+                : 'Clinic service is unavailable. Do not invent results.',
               Boolean(options.mutation),
             );
           }
 
           const errors: Record<number, string> = {
-            400: "INVALID_REQUEST: Check the supplied fields, date and time.",
-            401: "PATIENT_VERIFICATION_FAILED: Patient details did not match. Ask for correction without revealing stored values.",
-            404: "NOT_FOUND: The requested doctor or authorized appointment was not found.",
-            409: "CONFLICT: The slot or appointment state has changed. Refresh availability or appointments before proposing again.",
+            400: 'INVALID_REQUEST: Check the supplied fields, date and time.',
+            401: 'PATIENT_VERIFICATION_FAILED: Patient details did not match. Ask for correction without revealing stored values.',
+            404: 'NOT_FOUND: The requested doctor or authorized appointment was not found.',
+            409: 'CONFLICT: The slot or appointment state has changed. Refresh availability or appointments before proposing again.',
           };
 
           throw new ClinicApiError(
-            "REQUEST_REJECTED",
-            errors[response.status] ?? "The clinic rejected this request.",
+            'REQUEST_REJECTED',
+            errors[response.status] ?? 'The clinic rejected this request.',
           );
         }
 
@@ -126,8 +124,8 @@ export class ClinicClient implements Clinic {
 
         if (!parsed.success) {
           throw new ClinicApiError(
-            options.mutation ? "OUTCOME_UNKNOWN" : "INVALID_RESPONSE",
-            "The clinic returned an invalid response. Do not claim an outcome or blindly retry.",
+            options.mutation ? 'OUTCOME_UNKNOWN' : 'INVALID_RESPONSE',
+            'The clinic returned an invalid response. Do not claim an outcome or blindly retry.',
             Boolean(options.mutation),
           );
         }
@@ -139,22 +137,20 @@ export class ClinicClient implements Clinic {
         }
 
         throw new ClinicApiError(
-          options.mutation ? "OUTCOME_UNKNOWN" : "SERVICE_UNAVAILABLE",
+          options.mutation ? 'OUTCOME_UNKNOWN' : 'SERVICE_UNAVAILABLE',
           options.mutation
-            ? "The connection failed and the change may have been saved. Do not retry or claim success; look up appointments to reconcile."
-            : "The clinic request could not complete. Do not invent results.",
+            ? 'The connection failed and the change may have been saved. Do not retry or claim success; look up appointments to reconcile.'
+            : 'The clinic request could not complete. Do not invent results.',
           Boolean(options.mutation),
         );
       }
     };
 
-    return this.diagnostics
-      ? this.diagnostics.http(operation, options.signal, execute)
-      : execute();
+    return this.diagnostics ? this.diagnostics.http(operation, options.signal, execute) : execute();
   }
 
   clinic(signal?: AbortSignal) {
-    return this.request("clinic", clinicSchema, signal ? { signal } : {});
+    return this.request('clinic', clinicSchema, signal ? { signal } : {});
   }
 
   availability(doctorId: string, date: string, signal?: AbortSignal) {
@@ -167,10 +163,10 @@ export class ClinicClient implements Clinic {
 
   lookup(patient: PatientDetails, signal?: AbortSignal) {
     return this.request(
-      "appointments/lookup",
+      'appointments/lookup',
       z.object({ appointments: z.array(appointmentSchema) }),
       {
-        method: "POST",
+        method: 'POST',
         body: { patient },
         ...(signal ? { signal } : {}),
       },
@@ -178,7 +174,7 @@ export class ClinicClient implements Clinic {
   }
 
   change(
-    action: "book" | "cancel" | "reschedule",
+    action: 'book' | 'cancel' | 'reschedule',
     patient: PatientDetails,
     doctorId: string | null,
     startsAt: string | null,
@@ -186,18 +182,18 @@ export class ClinicClient implements Clinic {
     expected?: ClinicAppointment | null,
   ) {
     const path =
-      action === "book"
-        ? "appointments"
-        : `appointments/${encodeURIComponent(appointmentId!)}${action === "cancel" ? "/cancel" : ""}`;
+      action === 'book'
+        ? 'appointments'
+        : `appointments/${encodeURIComponent(appointmentId!)}${action === 'cancel' ? '/cancel' : ''}`;
 
     return this.request(path, z.object({ appointment: appointmentSchema }), {
-      method: action === "reschedule" ? "PATCH" : "POST",
+      method: action === 'reschedule' ? 'PATCH' : 'POST',
       body: {
         patient,
         confirmed: true,
         ...(expected ? { expected } : {}),
-        ...(action === "book" ? { doctorId } : {}),
-        ...(action !== "cancel" ? { startsAt } : {}),
+        ...(action === 'book' ? { doctorId } : {}),
+        ...(action !== 'cancel' ? { startsAt } : {}),
       },
       mutation: true,
     });

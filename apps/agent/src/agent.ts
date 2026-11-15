@@ -1,13 +1,13 @@
-import type { CallDiagnostics } from "./diagnostics.ts";
-import { Agent } from "@livekit/agents";
-import type { VerificationBridge } from "./verification.ts";
-import type { Clinic } from "./clinic.ts";
-import { createLLM } from "./models.ts";
-import { instructions } from "./prompts.ts";
-import { createClinicTools } from "./tools.ts";
+import type { CallDiagnostics } from './diagnostics.ts';
+import { Agent } from '@livekit/agents';
+import type { VerificationBridge } from './verification.ts';
+import type { Clinic } from './clinic.ts';
+import { createLLM } from './models.ts';
+import { instructions } from './prompts.ts';
+import { createClinicTools } from './tools.ts';
 
 export function createAgent(
-  language: "pl" | "en",
+  language: 'pl' | 'en',
   clinic: Clinic,
   verification: VerificationBridge,
   demo = false,

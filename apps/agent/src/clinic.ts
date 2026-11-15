@@ -1,5 +1,5 @@
-import { llm } from "@livekit/agents";
-import { z } from "zod";
+import { llm } from '@livekit/agents';
+import { z } from 'zod';
 
 // Wire contract only. This application never imports backend implementations.
 export const idSchema = z.string().min(1).max(128);
@@ -18,14 +18,14 @@ export const appointmentSchema = z.object({
   patientId: idSchema,
   startsAt: dateTimeSchema,
   endsAt: dateTimeSchema,
-  status: z.enum(["scheduled", "cancelled"]),
+  status: z.enum(['scheduled', 'cancelled']),
 });
 
 export const clinicSchema = z.object({
   now: dateTimeSchema,
-  timeZone: z.literal("Europe/Warsaw"),
-  opensAt: z.literal("07:00"),
-  closesAt: z.literal("19:00"),
+  timeZone: z.literal('Europe/Warsaw'),
+  opensAt: z.literal('07:00'),
+  closesAt: z.literal('19:00'),
   appointmentMinutes: z.literal(30),
   doctors: z.array(doctorSchema),
   operatingDays: z.string(),
@@ -36,10 +36,8 @@ export const clinicSchema = z.object({
 export const availabilitySchema = z.object({
   doctorId: idSchema,
   date: z.iso.date(),
-  timeZone: z.literal("Europe/Warsaw"),
-  slots: z.array(
-    z.object({ startsAt: dateTimeSchema, endsAt: dateTimeSchema }),
-  ),
+  timeZone: z.literal('Europe/Warsaw'),
+  slots: z.array(z.object({ startsAt: dateTimeSchema, endsAt: dateTimeSchema })),
 });
 
 export type PatientDetails = { verificationRef: string };
@@ -61,7 +59,7 @@ export interface Clinic {
   ): Promise<{ appointments: ClinicAppointment[] }>;
 
   change(
-    action: "book" | "cancel" | "reschedule",
+    action: 'book' | 'cancel' | 'reschedule',
     patient: PatientDetails,
     doctorId: string | null,
     startsAt: string | null,

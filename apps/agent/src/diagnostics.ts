@@ -1,94 +1,93 @@
-import { AsyncLocalStorage } from "node:async_hooks";
-import { randomUUID } from "node:crypto";
-import { llm, voice } from "@livekit/agents";
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { randomUUID } from 'node:crypto';
+import { llm, voice } from '@livekit/agents';
 
-export const DIAGNOSTICS_TOPIC = "clinic.diagnostics.v1";
+export const DIAGNOSTICS_TOPIC = 'clinic.diagnostics.v1';
 
 export const TOOL_NAMES = [
-  "getClinicInformation",
-  "verifyPatient",
-  "checkPatientVerification",
-  "findAvailableSlots",
-  "lookupAppointments",
-  "prepareAppointmentChange",
-  "confirmAppointmentChange",
-  "discardAppointmentChange",
+  'getClinicInformation',
+  'verifyPatient',
+  'checkPatientVerification',
+  'findAvailableSlots',
+  'lookupAppointments',
+  'prepareAppointmentChange',
+  'confirmAppointmentChange',
+  'discardAppointmentChange',
 ] as const;
 
 export type ToolName = (typeof TOOL_NAMES)[number];
 
-export type Outcome = "success" | "error" | "cancelled";
+export type Outcome = 'success' | 'error' | 'cancelled';
 
 export type Context = { toolId?: string; speechId?: string };
 
 export const LATENCIES = [
-  "transcriptionDelay",
-  "endOfTurnDelay",
-  "onUserTurnCompletedDelay",
-  "llmNodeTtft",
-  "ttsNodeTtfb",
-  "e2eLatency",
+  'transcriptionDelay',
+  'endOfTurnDelay',
+  'onUserTurnCompletedDelay',
+  'llmNodeTtft',
+  'ttsNodeTtfb',
+  'e2eLatency',
 ] as const;
 
 export type Latency = (typeof LATENCIES)[number];
 
 export type DiagnosticData =
-  | { kind: "ready" }
+  | { kind: 'ready' }
   | {
-      kind: "turn";
+      kind: 'turn';
       messageId: string;
-      role: "user" | "assistant";
+      role: 'user' | 'assistant';
       turnId?: string;
       speechId?: string;
-      correlation: "self" | "sdk-timing" | "unavailable";
+      correlation: 'self' | 'sdk-timing' | 'unavailable';
       metricsMs: Partial<Record<Latency, number>>;
       startedAtMs?: number;
       stoppedAtMs?: number;
       interrupted: boolean;
-      exclusion:
-        "none" | "proactive" | "human-wait" | "interrupted" | "no-user-timing";
+      exclusion: 'none' | 'proactive' | 'human-wait' | 'interrupted' | 'no-user-timing';
     }
   | {
-      kind: "speech";
+      kind: 'speech';
       speechId: string;
       messageIds: string[];
       interrupted: boolean;
     }
   | {
-      kind: "overlap";
+      kind: 'overlap';
       speechId?: string;
-      decision: "interruption" | "backchannel" | "inconclusive";
+      decision: 'interruption' | 'backchannel' | 'inconclusive';
       detectionMs?: number;
       inferenceMs?: number;
       rttMs?: number;
       requests?: number;
     }
-  | { kind: "recovery"; resumed: boolean }
+  | { kind: 'recovery'; resumed: boolean }
   | {
-      kind: "tool";
+      kind: 'tool';
       toolId: string;
       speechId?: string;
       name: ToolName;
-      phase: "start" | "end";
+      phase: 'start' | 'end';
       outcome?: Outcome;
       durationMs?: number;
     }
   | ({
-      kind: "http";
+      kind: 'http';
       requestId: string;
       operation:
-        | "clinic"
-        | "availability"
-        | "lookup"
-        | "appointment-write"
-        | "verification"
-        | "call"
-        | "other";
-      phase: "start" | "end";
+        | 'clinic'
+        | 'availability'
+        | 'lookup'
+        | 'appointment-write'
+        | 'verification'
+        | 'call'
+        | 'other';
+      phase: 'start' | 'end';
       durationMs?: number;
       outcome?: Outcome;
     } & Context)
-  | { kind: "wait"; reason: "form" | "confirmation"; active: boolean };
+  | { kind: 'wait'; reason: 'form' | 'confirmation'; active: boolean };
 
 export type DiagnosticEvent = DiagnosticData & {
   v: 1;
@@ -98,8 +97,7 @@ export type DiagnosticEvent = DiagnosticData & {
   atMs: number;
 };
 
-const finite = (n: unknown): n is number =>
-  typeof n === "number" && Number.isFinite(n);
+const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
 const duration = (n: unknown) => (finite(n) && n >= 0 ? n * 1000 : undefined);
 
 // A diagnostic callback must never break the session event emitter.
@@ -141,14 +139,11 @@ export class CallDiagnostics {
   private draining = false;
   private closed = false;
   private proactiveDepth = 0;
-  private waits = new Set<"form" | "confirmation">();
+  private waits = new Set<'form' | 'confirmation'>();
   private disposers: (() => void)[] = [];
   private speechCleanup = new Set<() => void>();
 
-  constructor(
-    privateCallId: string,
-    send: (event: DiagnosticEvent) => Promise<void>,
-  ) {
+  constructor(privateCallId: string, send: (event: DiagnosticEvent) => Promise<void>) {
     this.callId = privateCallId;
 
     this.send = send;
@@ -211,7 +206,7 @@ export class CallDiagnostics {
 
     this.draining = false;
   }
-  wait(reason: "form" | "confirmation", active: boolean) {
+  wait(reason: 'form' | 'confirmation', active: boolean) {
     if (this.waits.has(reason) === active) {
       return;
     }
@@ -222,7 +217,7 @@ export class CallDiagnostics {
       this.waits.delete(reason);
     }
 
-    this.emit({ kind: "wait", reason, active });
+    this.emit({ kind: 'wait', reason, active });
   }
   proactive<T>(execute: () => T): T {
     this.proactiveDepth++;
@@ -233,25 +228,20 @@ export class CallDiagnostics {
       this.proactiveDepth--;
     }
   }
-  private message(
-    item: llm.ChatMessage,
-    speechId?: string,
-    proactive = false,
-    waiting = false,
-  ) {
-    if (item.role !== "user" && item.role !== "assistant") {
+  private message(item: llm.ChatMessage, speechId?: string, proactive = false, waiting = false) {
+    if (item.role !== 'user' && item.role !== 'assistant') {
       return;
     }
 
     const messageId = this.alias(item.id);
     const metrics = item.metrics ?? {};
     let turnId: string | undefined;
-    let correlation: "self" | "sdk-timing" | "unavailable" = "unavailable";
+    let correlation: 'self' | 'sdk-timing' | 'unavailable' = 'unavailable';
 
-    if (item.role === "user") {
+    if (item.role === 'user') {
       turnId = messageId;
 
-      correlation = "self";
+      correlation = 'self';
 
       if (finite(metrics.stoppedSpeakingAt)) {
         this.userEnds.push({ stopped: metrics.stoppedSpeakingAt, turnId });
@@ -261,11 +251,8 @@ export class CallDiagnostics {
         }
       }
 
-      this.wait("confirmation", false);
-    } else if (
-      finite(metrics.startedSpeakingAt) &&
-      finite(metrics.e2eLatency)
-    ) {
+      this.wait('confirmation', false);
+    } else if (finite(metrics.startedSpeakingAt) && finite(metrics.e2eLatency)) {
       // SDK E2E uses exactly this user-stop timestamp; don't guess using receipt order.
       const stop = metrics.startedSpeakingAt - metrics.e2eLatency;
 
@@ -274,27 +261,27 @@ export class CallDiagnostics {
         .find((entry) => Math.abs(entry.stopped - stop) < 0.001)?.turnId;
 
       if (turnId) {
-        correlation = "sdk-timing";
+        correlation = 'sdk-timing';
       }
     }
 
     const exclusion =
-      item.role === "user"
-        ? this.waits.has("form")
-          ? "human-wait"
-          : "none"
+      item.role === 'user'
+        ? this.waits.has('form')
+          ? 'human-wait'
+          : 'none'
         : item.interrupted
-          ? "interrupted"
+          ? 'interrupted'
           : proactive
-            ? "proactive"
+            ? 'proactive'
             : waiting || this.waits.size
-              ? "human-wait"
+              ? 'human-wait'
               : !turnId
-                ? "no-user-timing"
-                : "none";
+                ? 'no-user-timing'
+                : 'none';
 
     this.emit({
-      kind: "turn",
+      kind: 'turn',
       messageId,
       role: item.role,
       ...(turnId ? { turnId } : {}),
@@ -314,7 +301,7 @@ export class CallDiagnostics {
   attach(session: voice.AgentSession) {
     const events = voice.AgentSessionEventTypes;
     const item = (event: voice.ConversationItemAddedEvent) => {
-      if (event.item.type === "message" && event.item.role === "user") {
+      if (event.item.type === 'message' && event.item.role === 'user') {
         this.message(event.item);
       }
     };
@@ -332,8 +319,7 @@ export class CallDiagnostics {
         }
 
         const messages = handle.chatItems.filter(
-          (item): item is llm.ChatMessage =>
-            item.type === "message" && item.role === "assistant",
+          (item): item is llm.ChatMessage => item.type === 'message' && item.role === 'assistant',
         );
 
         for (const message of messages) {
@@ -341,7 +327,7 @@ export class CallDiagnostics {
         }
 
         this.emit({
-          kind: "speech",
+          kind: 'speech',
           speechId,
           messageIds: messages.map((m) => this.alias(m.id)).slice(-16),
           interrupted: handle.interrupted,
@@ -361,16 +347,14 @@ export class CallDiagnostics {
 
       handle.addDoneCallback(done);
     };
-    const overlap = (
-      event: Extract<voice.AgentEvent, { type: "overlapping_speech" }>,
-    ) => {
+    const overlap = (event: Extract<voice.AgentEvent, { type: 'overlapping_speech' }>) => {
       this.emit({
-        kind: "overlap",
+        kind: 'overlap',
         decision: event.agentEnded
-          ? "inconclusive"
+          ? 'inconclusive'
           : event.isInterruption
-            ? "interruption"
-            : "backchannel",
+            ? 'interruption'
+            : 'backchannel',
         ...(duration(event.detectionDelayInS) !== undefined
           ? { detectionMs: duration(event.detectionDelayInS)! }
           : {}),
@@ -384,7 +368,7 @@ export class CallDiagnostics {
       });
     };
     const recovery = (event: voice.AgentFalseInterruptionEvent) =>
-      this.emit({ kind: "recovery", resumed: event.resumed });
+      this.emit({ kind: 'recovery', resumed: event.resumed });
 
     const observers = {
       item: safeObserver(item),
@@ -411,13 +395,9 @@ export class CallDiagnostics {
       session.off(events.AgentFalseInterruption, observers.recovery);
     });
 
-    this.emit({ kind: "ready" });
+    this.emit({ kind: 'ready' });
   }
-  async tool<T>(
-    name: ToolName,
-    options: llm.ToolOptions,
-    execute: () => Promise<T>,
-  ): Promise<T> {
+  async tool<T>(name: ToolName, options: llm.ToolOptions, execute: () => Promise<T>): Promise<T> {
     const toolId = this.alias(options.toolCallId);
     const speechId = options.ctx.speechHandle?.id
       ? this.alias(options.ctx.speechHandle.id)
@@ -425,40 +405,37 @@ export class CallDiagnostics {
     const context = { toolId, ...(speechId ? { speechId } : {}) };
     const started = performance.now();
 
-    this.emit({ kind: "tool", ...context, name, phase: "start" });
+    this.emit({ kind: 'tool', ...context, name, phase: 'start' });
 
-    let outcome: Outcome = "success";
+    let outcome: Outcome = 'success';
 
     try {
       return await this.context.run(context, execute);
     } catch (error) {
-      outcome = options.abortSignal.aborted ? "cancelled" : "error";
+      outcome = options.abortSignal.aborted ? 'cancelled' : 'error';
 
       throw error;
     } finally {
       this.emit({
-        kind: "tool",
+        kind: 'tool',
         ...context,
         name,
-        phase: "end",
+        phase: 'end',
         outcome,
         durationMs: performance.now() - started,
       });
 
-      if (name === "prepareAppointmentChange" && outcome === "success") {
-        this.wait("confirmation", true);
+      if (name === 'prepareAppointmentChange' && outcome === 'success') {
+        this.wait('confirmation', true);
       }
 
-      if (
-        name === "confirmAppointmentChange" ||
-        name === "discardAppointmentChange"
-      ) {
-        this.wait("confirmation", false);
+      if (name === 'confirmAppointmentChange' || name === 'discardAppointmentChange') {
+        this.wait('confirmation', false);
       }
     }
   }
   async http<T>(
-    operation: Extract<DiagnosticData, { kind: "http" }>["operation"],
+    operation: Extract<DiagnosticData, { kind: 'http' }>['operation'],
     signal: AbortSignal | undefined,
     execute: () => Promise<T>,
   ): Promise<T> {
@@ -467,28 +444,28 @@ export class CallDiagnostics {
     const started = performance.now();
 
     this.emit({
-      kind: "http",
+      kind: 'http',
       ...context,
       requestId,
       operation,
-      phase: "start",
+      phase: 'start',
     });
 
-    let outcome: Outcome = "success";
+    let outcome: Outcome = 'success';
 
     try {
       return await execute();
     } catch (error) {
-      outcome = signal?.aborted ? "cancelled" : "error";
+      outcome = signal?.aborted ? 'cancelled' : 'error';
 
       throw error;
     } finally {
       this.emit({
-        kind: "http",
+        kind: 'http',
         ...context,
         requestId,
         operation,
-        phase: "end",
+        phase: 'end',
         outcome,
         durationMs: performance.now() - started,
       });

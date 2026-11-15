@@ -1,7 +1,0 @@
-.next/
-node_modules/
-coverage/
-.env*
-!.env.example
-next-env.d.ts
-*.tsbuildinfo

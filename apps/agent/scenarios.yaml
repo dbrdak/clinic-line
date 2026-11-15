@@ -4,7 +4,7 @@ scenarios:
   - id: SCN_demoBooking
     userdata:
       language: en
-      expectedStart: "2030-05-07T08:00:00.000Z"
+      expectedStart: '2030-05-07T08:00:00.000Z'
     label: Complete a demo booking after review
     instructions: |
       Speak English. You are experimenting with fictional appointments in the standalone demo.
@@ -21,7 +21,7 @@ scenarios:
   - id: SCN_demoCorrection
     userdata:
       language: en
-      expectedStart: "2030-05-07T09:00:00.000Z"
+      expectedStart: '2030-05-07T09:00:00.000Z'
     label: Correct a proposal before confirming
     instructions: |
       Speak English. Ask to book doctor Maria Przykładowa on May 7, 2030 at 10:00 Warsaw time.
@@ -47,7 +47,7 @@ scenarios:
   - id: SCN_demoRegistration
     userdata:
       language: pl
-      expectedStart: "2030-05-07T08:00:00.000Z"
+      expectedStart: '2030-05-07T08:00:00.000Z'
     label: Register a new demo patient and book after confirmation
     instructions: |
       Rozmawiaj po polsku. Jesteś nową fikcyjną pacjentką: Alicja Nowa.
