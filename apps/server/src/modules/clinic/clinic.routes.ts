@@ -2,7 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import type { ZodTypeProvider } from '@fastify/type-provider-zod';
 
 import { clinicInformationSchema } from '@clinicline/contracts';
-import { CLINIC_TIME_ZONE } from '../../shared/time.js';
+import { clinicPolicy } from './clinic.policy.js';
 
 export const clinicRoutes: FastifyPluginAsync = async (app) => {
   const router = app.withTypeProvider<ZodTypeProvider>();
@@ -16,14 +16,8 @@ export const clinicRoutes: FastifyPluginAsync = async (app) => {
         },
       },
     },
-    async () => ({
-      now: new Date().toISOString(),
-      timeZone: CLINIC_TIME_ZONE,
-      opensAt: '07:00',
-      closesAt: '19:00',
-      appointmentMinutes: 30,
-      operatingDays: 'Monday–Friday',
-      bookingHorizon: 'Today and the following 29 Warsaw calendar dates; future starts only.',
-    }),
+    () => {
+      return clinicPolicy;
+    },
   );
 };

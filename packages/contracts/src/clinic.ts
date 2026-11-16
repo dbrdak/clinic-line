@@ -6,8 +6,8 @@ export const clinicInformationSchema = z.object({
   opensAt: z.string(),
   closesAt: z.string(),
   appointmentMinutes: z.int32(),
-  operatingDays: z.string(),
-  bookingHorizon: z.string(),
+  operatingDays: z.array(z.int().min(1).max(7)),
+  bookingHorizon: z.number(),
 });
 
 export type ClinicInformation = z.infer<typeof clinicInformationSchema>;

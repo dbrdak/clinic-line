@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, lt } from 'drizzle-orm';
+import { and, asc, eq, gt, gte, lt, ne } from 'drizzle-orm';
 
 import type { AppointmentQuerySchema } from '@clinicline/contracts/appointments';
 
@@ -37,6 +37,29 @@ export async function findAll(filters: AppointmentQuerySchema) {
       ),
     )
     .orderBy(asc(appointments.startsAt));
+}
+
+export async function hasConflict(
+  doctorId: string,
+  startsAt: Date,
+  endsAt: Date,
+  excludeId?: string,
+): Promise<boolean> {
+  const [conflict] = await db
+    .select({ id: appointments.id })
+    .from(appointments)
+    .where(
+      and(
+        eq(appointments.doctorId, doctorId),
+        eq(appointments.status, 'scheduled'),
+        lt(appointments.startsAt, endsAt),
+        gt(appointments.endsAt, startsAt),
+        excludeId ? ne(appointments.id, excludeId) : undefined,
+      ),
+    )
+    .limit(1);
+
+  return conflict !== undefined;
 }
 
 export async function insert(input: NewAppointmentRecord) {
