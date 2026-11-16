@@ -21,7 +21,7 @@ export const clinicRoutes: FastifyPluginAsync = async (app) => {
       timeZone: CLINIC_TIME_ZONE,
       opensAt: '07:00',
       closesAt: '19:00',
-      appointmentMinutes: Number.parseInt(process.env.APPOINTMENT_DURATION_MINUTES ?? '30'),
+      appointmentMinutes: 30,
       operatingDays: 'Monday–Friday',
       bookingHorizon: 'Today and the following 29 Warsaw calendar dates; future starts only.',
     }),

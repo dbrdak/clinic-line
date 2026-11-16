@@ -1,7 +1,9 @@
 import { DatabaseSync } from 'node:sqlite';
 import { drizzle } from 'drizzle-orm/node-sqlite';
 
-const databasePath = process.env.DB_PATH ?? './data/clinicline.db';
+import { databasePath, ensureDatabaseDirectory } from './config.js';
+
+ensureDatabaseDirectory();
 
 const sqlite = new DatabaseSync(databasePath);
 
