@@ -1,34 +1,16 @@
-import type { CallDiagnostics, ToolName } from './diagnostics.ts';
 import { llm } from '@livekit/agents';
 import { z } from 'zod';
 import { idSchema, type Clinic } from './clinic.ts';
-import type { VerificationBridge } from './verification.ts';
 import { proposalInput } from './tool-schemas.ts';
-import { createConversation } from './conversation.ts';
 
-export function createClinicTools(
-  clinic: Clinic,
-  verification?: VerificationBridge,
-  diagnostics?: CallDiagnostics,
-) {
-  const state = createConversation(clinic, verification);
-  const measured =
-    <Args, Result>(
-      name: ToolName,
-      execute: (args: Args, options: llm.ToolOptions) => Promise<Result>,
-    ) =>
-    (args: Args, options: llm.ToolOptions) =>
-      diagnostics
-        ? diagnostics.tool(name, options, () => execute(args, options))
-        : execute(args, options);
-
+export function createClinicTools() {
   return [
     llm.tool({
       name: 'getClinicInformation',
       description:
         'Read clinic hours, duration, Warsaw timezone, trusted current time and actual doctor IDs. Use before resolving relative dates or choosing a doctor. Read-only; no patient data needed. Do not invent clinic names or doctor IDs.',
       parameters: z.object({}),
-      execute: measured('getClinicInformation', state.getClinicInformation),
+      execute: state.getClinicInformation,
     }),
     llm.tool({
       name: 'verifyPatient',

@@ -1,13 +1,11 @@
-import { ServerOptions, cli, defineAgent, voice } from '@livekit/agents';
+import { ServerOptions, cli, defineAgent } from '@livekit/agents';
 import { EnhancerModel, audioEnhancement } from '@livekit/plugins-ai-coustics';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { RoomEvent } from '@livekit/rtc-node';
 import { ClinicClient } from './clinic-client.ts';
-import { createVerificationBridge } from './verification.ts';
 import { createSession } from './models.ts';
-import { CallDiagnostics, DIAGNOSTICS_TOPIC } from './diagnostics.ts';
 import { createAgent } from './agent.ts';
 
 dotenv.config({ path: '.env.local', quiet: true });
@@ -33,61 +31,21 @@ export default defineAgent({
       throw new Error('CLINIC_AGENT_SECRET is required.');
     }
 
-    const diagnostics = new CallDiagnostics(call.callId, async (event) => {
-      await ctx.room.localParticipant?.publishData(
-        new TextEncoder().encode(JSON.stringify(event)),
-        {
-          reliable: true,
-          destination_identities: [call.participantIdentity],
-          topic: DIAGNOSTICS_TOPIC,
-        },
-      );
+    const client = new ClinicClient(undefined, fetch, {
+      id: call.callId,
+      secret,
     });
-
-    ctx.addShutdownCallback(async () => diagnostics.close());
-
-    const client = new ClinicClient(
-      undefined,
-      fetch,
-      {
-        id: call.callId,
-        secret,
-      },
-      diagnostics,
-    );
 
     await ctx.connect();
 
     await ctx.waitForParticipant(call.participantIdentity);
-
-    const bridge = createVerificationBridge(
-      client,
-      call,
-      async (payload) => {
-        if (!ctx.room.localParticipant) {
-          throw new Error('Agent is disconnected.');
-        }
-
-        const ack = await ctx.room.localParticipant.performRpc({
-          destinationIdentity: call.participantIdentity,
-          method: 'clinic.openVerification',
-          payload: JSON.stringify(payload),
-          responseTimeout: 5000,
-        });
-
-        if (ack !== 'accepted') {
-          throw new Error('Verification form is unavailable.');
-        }
-      },
-      diagnostics,
-    );
 
     const cleanup = async () => {
       await client
         .request('voice/call', z.object({ ended: z.boolean() }), {
           method: 'DELETE',
         })
-        .catch(() => {});
+        .catch();
     };
 
     ctx.addShutdownCallback(cleanup);
@@ -100,12 +58,8 @@ export default defineAgent({
 
     const session = createSession(call.language);
 
-    diagnostics.attach(session);
-
-    session.on(voice.AgentSessionEventTypes.Close, () => diagnostics.close());
-
     await session.start({
-      agent: createAgent(call.language, client, bridge, false, diagnostics),
+      agent: createAgent(call.language, client),
       room: ctx.room,
       outputOptions: { transcriptionEnabled: false },
       inputOptions: {
@@ -120,29 +74,8 @@ export default defineAgent({
         throw new Error('Unexpected participant.');
       }
 
-      const { requestId } = z
-        .object({ requestId: z.uuid() })
-        .strict()
-        .parse(JSON.parse(data.payload));
-      const result = await bridge.status(requestId);
-
-      diagnostics.proactive(() =>
-        session.generateReply({
-          instructions: `The backend verification status is ${result.status}. Call checkPatientVerification to synchronize it. Continue in ${call.language === 'pl' ? 'Polish' : 'English'}. This event is not caller consent to any appointment change.`,
-        }),
-      );
-
       return 'accepted';
     });
-
-    diagnostics.proactive(() =>
-      session.generateReply({
-        instructions: `
-        Speak ${call.language === 'pl' ? 'Polish' : 'English'}. Greet the caller briefly and calmly. Introduce yourself as Klara, the clinic's virtual receptionist,
-        and ask how you can help with appointments. Follow your existing identity, capability, privacy,
-        and scope instructions.`,
-      }),
-    );
   },
 });
 
