@@ -6,6 +6,7 @@ import type {
 } from '@clinicline/contracts/appointments';
 
 import { AppError } from '../../shared/app-error.js';
+import { parseAppointmentTime } from '../../shared/time.js';
 import * as repository from './appointments.repository.js';
 import {
   createAppointmentRecordSchema,
@@ -24,9 +25,23 @@ export async function getAppointment(id: string): Promise<Appointment> {
 }
 
 export async function getAppointments(query: AppointmentQuerySchema): Promise<Appointment[]> {
-  const patients = await repository.findAll(query);
+  const filters = {
+    ...query,
+    ...(query.starts_from && {
+      starts_from: parseAppointmentTime(query.starts_from).toISOString(),
+    }),
+    ...(query.starts_to && {
+      starts_to: parseAppointmentTime(query.starts_to).toISOString(),
+    }),
+  };
 
-  return patients.map(toAppointmentResponse);
+  if (filters.starts_from && filters.starts_to && filters.starts_from >= filters.starts_to) {
+    throw new AppError(400, 'invalid_time_range', 'starts_from must be before starts_to.');
+  }
+
+  const appointments = await repository.findAll(filters);
+
+  return appointments.map(toAppointmentResponse);
 }
 
 export async function createAppointment(input: CreateAppointmentRequest): Promise<Appointment> {
