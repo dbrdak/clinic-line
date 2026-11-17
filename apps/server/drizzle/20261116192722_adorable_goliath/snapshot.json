@@ -2,9 +2,7 @@
   "version": "7",
   "dialect": "sqlite",
   "id": "3aa69038-0d0f-4699-946c-4e8045849176",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
+  "prevIds": ["00000000-0000-0000-0000-000000000000"],
   "ddl": [
     {
       "name": "appointments",
@@ -141,13 +139,9 @@
     {
       "table": "appointments",
       "name": "fk_appointments_patient_id_patients_id_fk",
-      "columns": [
-        "patient_id"
-      ],
+      "columns": ["patient_id"],
       "tableTo": "patients",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "RESTRICT",
       "nameExplicit": false,
@@ -156,13 +150,9 @@
     {
       "table": "appointments",
       "name": "fk_appointments_doctor_id_doctors_id_fk",
-      "columns": [
-        "doctor_id"
-      ],
+      "columns": ["doctor_id"],
       "tableTo": "doctors",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "RESTRICT",
       "nameExplicit": false,
@@ -171,27 +161,21 @@
     {
       "table": "appointments",
       "name": "appointments_pk",
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "entityType": "pks"
     },
     {
       "table": "doctors",
       "name": "doctors_pk",
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "entityType": "pks"
     },
     {
       "table": "patients",
       "name": "patients_pk",
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "entityType": "pks"
     }

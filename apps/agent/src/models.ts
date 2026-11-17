@@ -7,16 +7,20 @@ export function createLLM() {
   });
 }
 
-export function createSession(language: 'pl' | 'en') {
+export function createSession() {
   return new voice.AgentSession({
     stt: new inference.STT({
-      model: process.env.STT_MODEL ?? 'deepgram/nova-3',
-      language,
+      model: process.env.STT_MODEL ?? 'google/gemini-3.5-transcribe-live',
+      modelOptions: {
+        language_codes: ['pl-PL', 'en-US'],
+      },
     }),
     tts: new inference.TTS({
-      model: process.env.TTS_MODEL ?? 'xai/tts-1',
-      voice: process.env.TTS_VOICE ?? 'carina',
-      language,
+      model: process.env.TTS_MODEL ?? 'google/gemini-3.8-flash-tts',
+      voice: process.env.TTS_VOICE ?? 'Zephyr',
+      modelOptions: {
+        language_codes: ['pl-PL', 'en-US'],
+      },
     }),
     turnHandling: {
       turnDetection: new inference.TurnDetector(),

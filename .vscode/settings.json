@@ -7,17 +7,18 @@
     "editor.formatOnSave": true
   },
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
   },
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
   },
   "prettier.requireConfig": true,
-  "prettier.configPath": ".prettierrc.json",
-  "prettier.prettierPath": "./node_modules/prettier",
   "eslint.useFlatConfig": true,
   "eslint.validate": ["javascript", "typescript", "javascriptreact", "typescriptreact"],
   "eslint.workingDirectories": [
@@ -33,5 +34,11 @@
   "js/ts.tsdk.promptToUseWorkspaceVersion": true,
   "files.eol": "\n",
   "files.insertFinalNewline": true,
-  "files.trimTrailingWhitespace": true
+  "files.trimTrailingWhitespace": true,
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }
